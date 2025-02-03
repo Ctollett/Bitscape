@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rust Synth Engine Demo with Analyzer</title>
+  <style>
+    canvas {
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    label {
+      display: inline-block;
+      width: 220px;
+    }
+    div.control-group {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rust Synth Engine Demo</h1>
+  <p>Press keys (a, s, d) to trigger tones.</p>
+  
+  <!-- FM Algorithm Selector -->
+  <div class="control-group">
+    <label for="algorithmSelect">Select FM Algorithm:</label>
+    <select id="algorithmSelect">
+      <option value="0">Algorithm 1 (Stacked)</option>
+      <option value="1">Algorithm 2 (Parallel)</option>
+      <option value="2">Algorithm 3 (Branching)</option>
+      <option value="3">Algorithm 4 (Combination)</option>
+      <option value="4">Algorithm 5 (Cross Modulation)</option>
+      <option value="5">Algorithm 6 (Hybrid Branching)</option>
+      <option value="6">Algorithm 7 (Direct with Subtle Modulator)</option>
+      <option value="7">Algorithm 8 (Split Routing)</option>
+    </select>
+  </div>
+  
+  <!-- Frequency Ratio Sliders -->
+  <div class="control-group">
+    <label for="freqRatioC">Frequency Ratio (Group C):</label>
+    <input id="freqRatioC" type="range" min="0.25" max="16.0" step="0.01" value="1.0">
+    <span id="freqRatioCValue">1.00</span>
+  </div>
+
+  <div class="control-group">
+    <label for="freqRatioA">Frequency Ratio (Group A):</label>
+    <input id="freqRatioA" type="range" min="0.25" max="16.0" step="0.01" value="1.0">
+    <span id="freqRatioAValue">1.00</span>
+  </div>
+
+  <div class="control-group">
+    <label for="freqRatioB">Frequency Ratio (Group B):</label>
+    <input id="freqRatioB" type="range" min="0.25" max="16.0" step="0.01" value="1.0">
+    <span id="freqRatioBValue">1.00</span>
+  </div>
+
+  <!-- Carrier Mix Slider -->
+  <div class="control-group">
+    <label for="carrierMixSlider">Carrier Mix (C vs. B):</label>
+    <input id="carrierMixSlider" type="range" min="0.0" max="1.0" step="0.01" value="0.5">
+    <span id="carrierMixValue">0.50</span>
+  </div>
+
+  <!-- Modulation Depth Sliders -->
+<!-- Modulation Index Sliders -->
+<div class="control-group">
+    <label for="modIndexASlider">Modulation Index (Group A):</label>
+    <input id="modIndexASlider" type="range" min="0.0" max="5.0" step="0.01" value="1.0">
+    <span id="modIndexAValue">1.00</span>
+</div>
+
+<div class="control-group">
+    <label for="modIndexBSlider">Modulation Index (Group B):</label>
+    <input id="modIndexBSlider" type="range" min="0.0" max="5.0" step="0.01" value="1.0">
+    <span id="modIndexBValue">1.00</span>
+</div>
+
+  
+
+
+  <!-- ADSR Controls for Modulator Group A -->
+  <h2>Modulator ADSR - Group A</h2>
+  <div class="control-group">
+    <label for="attackA">Attack:</label>
+    <input id="attackA" type="range" min="0.001" max="1.0" step="0.001" value="0.01">
+    <span id="attackAValue">0.01</span>
+  </div>
+  <div class="control-group">
+    <label for="decayA">Decay:</label>
+    <input id="decayA" type="range" min="0.001" max="1.0" step="0.001" value="0.1">
+    <span id="decayAValue">0.10</span>
+  </div>
+  <div class="control-group">
+    <label for="sustainA">Sustain:</label>
+    <input id="sustainA" type="range" min="0.0" max="1.0" step="0.01" value="0.8">
+    <span id="sustainAValue">0.80</span>
+  </div>
+  <div class="control-group">
+    <label for="releaseA">Release:</label>
+    <input id="releaseA" type="range" min="0.001" max="2.0" step="0.001" value="0.2">
+    <span id="releaseAValue">0.20</span>
+  </div>
+  <button id="updateADSR_A">Update ADSR for Group A</button>
+  
+  <br><br>
+
+  <!-- Canvas for the Analyzer -->
+  <canvas id="analyserCanvas" width="800" height="200"></canvas>
+
+  <script type="module">
+    import init, { Synth } from '../synth_engine/pkg/synth_engine.js';
+
+    async function run() {
+      await init();
+      const synth = new Synth();
+
+      // Create an AudioContext.
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Resume AudioContext on first key press.
+      document.addEventListener('keydown', () => {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      });
+
+      // Map keys to frequencies.
+      const keyToFrequency = {
+        'a': 440,    // A4
+        's': 493.88, // B4
+        'd': 523.25, // C5
+      };
+
+      // Note on/off handling.
+      document.addEventListener('keydown', (e) => {
+        const freq = keyToFrequency[e.key];
+        if (freq) {
+          const noteId = e.key.charCodeAt(0);
+          console.log(`JS: note_on - noteId=${noteId}, freq=${freq}`);
+          synth.note_on(noteId, freq);
+        }
+      });
+
+      document.addEventListener('keyup', (e) => {
+        const freq = keyToFrequency[e.key];
+        if (freq) {
+          const noteId = e.key.charCodeAt(0);
+          console.log(`JS: note_off - noteId=${noteId}`);
+          synth.note_off(noteId);
+        }
+      });
+
+      // Algorithm selector.
+      document.getElementById('algorithmSelect').addEventListener('change', (e) => {
+        const algoIndex = parseInt(e.target.value, 10);
+        console.log(`JS: Changing algorithm to ${algoIndex}`);
+        synth.set_algorithm(algoIndex);
+        synth.log_current_algorithm();
+      });
+
+      // Frequency ratio for Group C.
+      const freqRatioC = document.getElementById('freqRatioC');
+      const freqRatioCValue = document.getElementById('freqRatioCValue');
+      freqRatioC.addEventListener('input', (e) => {
+        const newRatio = parseFloat(e.target.value);
+        freqRatioCValue.textContent = newRatio.toFixed(2);
+        console.log(`JS: Setting Group C frequency ratio to ${newRatio}`);
+        synth.update_operator_ratio("C", newRatio);
+      });
+
+      // Frequency ratio for Group A.
+      const freqRatioA = document.getElementById('freqRatioA');
+      const freqRatioAValue = document.getElementById('freqRatioAValue');
+      freqRatioA.addEventListener('input', (e) => {
+        const newRatio = parseFloat(e.target.value);
+        freqRatioAValue.textContent = newRatio.toFixed(2);
+        console.log(`JS: Setting Group A frequency ratio to ${newRatio}`);
+        synth.update_operator_ratio("A", newRatio);
+      });
+
+      // Frequency ratio for Group B.
+      const freqRatioB = document.getElementById('freqRatioB');
+      const freqRatioBValue = document.getElementById('freqRatioBValue');
+      freqRatioB.addEventListener('input', (e) => {
+        const newRatio = parseFloat(e.target.value);
+        freqRatioBValue.textContent = newRatio.toFixed(2);
+        console.log(`JS: Setting Group B frequency ratio to ${newRatio}`);
+        synth.update_operator_ratio("B", newRatio);
+      });
+
+      // Carrier mix.
+      const carrierMixSlider = document.getElementById('carrierMixSlider');
+      const carrierMixValue = document.getElementById('carrierMixValue');
+      carrierMixSlider.addEventListener('input', (e) => {
+        const mix = parseFloat(e.target.value);
+        carrierMixValue.textContent = mix.toFixed(2);
+        console.log(`JS: Setting carrier mix to ${mix}`);
+        synth.set_carrier_mix(mix);
+      });
+
+
+ 
+
+      // Modulation depth for Group A.
+// Modulation Index for Group A
+const modIndexASlider = document.getElementById('modIndexASlider');
+const modIndexAValue = document.getElementById('modIndexAValue');
+modIndexASlider.addEventListener('input', (e) => {
+    const newModIndexA = parseFloat(e.target.value);
+    modIndexAValue.textContent = newModIndexA.toFixed(2);
+    console.log(`JS: Setting modulation depth for Group A to ${newModIndexA}`);
+    synth.set_modulation_depth_a(newModIndexA); // ✅ Correct function call
+});
+
+const modIndexBSlider = document.getElementById('modIndexBSlider');
+const modIndexBValue = document.getElementById('modIndexBValue');
+modIndexBSlider.addEventListener('input', (e) => {
+    const newModIndexB = parseFloat(e.target.value);
+    modIndexBValue.textContent = newModIndexB.toFixed(2);
+    console.log(`JS: Setting modulation depth for Group B to ${newModIndexB}`);
+    synth.set_modulation_depth_b(newModIndexB); // ✅ Correct function call
+});
+
+
+      // Create a ScriptProcessorNode.
+      const bufferSize = 1024;
+      const scriptNode = audioCtx.createScriptProcessor(bufferSize, 0, 1);
+      scriptNode.onaudioprocess = function(audioProcessingEvent) {
+        const outputBuffer = audioProcessingEvent.outputBuffer;
+        const channelData = outputBuffer.getChannelData(0);
+        for (let i = 0; i < channelData.length; i++) {
+          channelData[i] = synth.process_sample();
+        }
+      };
+
+      // Create a GainNode.
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.value = 1.0;
+
+      // Create an AnalyserNode.
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      // Connect the nodes: ScriptProcessor -> Gain -> Analyser -> Destination.
+      scriptNode.connect(gainNode);
+      gainNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+      // Setup canvas for the analyzer.
+      const canvas = document.getElementById('analyserCanvas');
+      const canvasCtx = canvas.getContext('2d');
+
+      function draw() {
+        requestAnimationFrame(draw);
+        analyser.getByteTimeDomainData(dataArray);
+        canvasCtx.fillStyle = 'rgb(200, 200, 200)';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
+        canvasCtx.beginPath();
+        const sliceWidth = canvas.width / bufferLength;
+        let x = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          const v = dataArray[i] / 128.0;
+          const y = (v * canvas.height) / 2;
+          if (i === 0) {
+            canvasCtx.moveTo(x, y);
+          } else {
+            canvasCtx.lineTo(x, y);
+          }
+          x += sliceWidth;
+        }
+        canvasCtx.lineTo(canvas.width, canvas.height / 2);
+        canvasCtx.stroke();
+      }
+      draw();
+    }
+
+    run();
+  </script>
+</body>
+</html>
+
