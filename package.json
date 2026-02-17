@@ -1,0 +1,9 @@
+{
+  "name": "bitscape",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix app",
+    "build": "npm run build --prefix app",
+    "build:wasm": "cd synth_engine && wasm-pack build --target web --out-dir pkg"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+synth_engine/target/
+synth_engine/pkg/
+*.wasm.d.ts
+.DS_Store
+.claude/
