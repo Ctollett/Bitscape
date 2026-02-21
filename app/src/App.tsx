@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { initAudio } from './audio/engine';
 import Keyboard from './components/Keyboard';
-import TestPanel from './components/TestPanel';
+import { PatchProvider } from './fm-canvas/PatchProvider';
+import { FMCanvas } from './fm-canvas/FMCanvas';
 import './App.css';
+import { GlobalControlPanel } from './fm-canvas/GlobalControlPanel';
 
 function App() {
   const [started, setStarted] = useState(false);
@@ -28,10 +30,15 @@ function App() {
           {loading ? 'Loading...' : 'Start Audio'}
         </button>
       ) : (
-        <>
-          <Keyboard />
-          <TestPanel />
-        </>
+        <PatchProvider>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <FMCanvas />
+            </div>
+            <GlobalControlPanel />
+            <Keyboard />
+          </div>
+        </PatchProvider>
       )}
     </div>
   );

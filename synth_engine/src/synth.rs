@@ -8,7 +8,6 @@ use wasm_bindgen::JsValue;
 
 use crate::envelope::Envelope;
 use crate::envelope_trait::EnvelopeTrait;
-use crate::mod_envelope::ModEnvelope;
 use crate::algorithm::{FMAlgorithm, get_algorithms};
 use crate::voice::FMVoice;
 use crate::filter::{Filter, FilterType};
@@ -134,6 +133,10 @@ pub struct Synth {
     overdrive: f32,
     pan: f32,
     volume: f32,
+    portamento_time: f32,
+    last_note_frequency: f32,  // For portamento continuity across voices
+    pitch_bend_range: f32,     // Pitch bend range in semitones (0-24)
+    pitch_bend_value: f32,     // Current pitch bend (-1.0 to +1.0, where 0 = no bend)
     effects: Effects,
 }
 
@@ -189,6 +192,10 @@ impl Synth {
             overdrive: 0.0,
             pan: 0.0,
             volume: 127.0,
+            portamento_time: 0.0,
+            last_note_frequency: 440.0,
+            pitch_bend_range: 2.0,  // Default 2 semitones (standard)
+            pitch_bend_value: 0.0,   // No bend initially
             effects,
             lfo1,
             lfo2,
@@ -206,9 +213,13 @@ impl Synth {
          let voice = &self.voices[0];
          let (last_l, last_r) = voice.last_output();
 
-         let cur_algo     = &self.algorithms[self.current_algo];
-         let algo_name    = format!("Algo {}", self.current_algo + 1);
-         let algo_diagram = cur_algo.diagram.to_string();
+         // Read the actual algorithm from voice 0 (reflects custom routing)
+         let cur_algo     = &voice.algorithm;
+         let algo_name    = cur_algo.name.to_string();
+         let algo_diagram = format!(
+             "mods: {:?}, carriers: {:?}, output: {:?}",
+             cur_algo.modulations, cur_algo.carriers, cur_algo.output_routing
+         );
 
          
          let op_wave = [
@@ -244,8 +255,8 @@ impl Synth {
              op_wave,
              op_sample,
              amp_env:             voice.amp_envelope.get_level(),
-             mod_env_a:           voice.mod_env_a.get_level(),
-             mod_env_b:           voice.mod_env_b.get_level(),
+             mod_env_a:           voice.operator_mod_envs[0].get_level(),  // Report op 0 for legacy compat
+             mod_env_b:           voice.operator_mod_envs[2].get_level(),  // Report op 2 for legacy compat
              filter_env_amount:   self.filter_l.env_amount(),
              algo_name,
              algo_diagram,
@@ -323,10 +334,10 @@ impl Synth {
     // ——— FM parameter setters ———
 
     #[wasm_bindgen]
-    pub fn set_mod_depth_a(&mut self, d: f32) { self.mod_depth_a = (d / 127.0).clamp(0.0, 1.0); }
+    pub fn set_mod_depth_a(&mut self, d: f32) { self.mod_depth_a = d.clamp(0.0, 127.0); }
 
     #[wasm_bindgen]
-    pub fn set_mod_depth_b(&mut self, d: f32) { self.mod_depth_b = (d / 127.0).clamp(0.0, 1.0); }
+    pub fn set_mod_depth_b(&mut self, d: f32) { self.mod_depth_b = d.clamp(0.0, 127.0); }
 
     #[wasm_bindgen]
 pub fn set_octave(&mut self, shift: i32) {
@@ -337,17 +348,12 @@ pub fn set_octave(&mut self, shift: i32) {
     }
 }
 
+    /// Set mod envelope for a specific operator (0-3) across all voices.
     #[wasm_bindgen]
-    pub fn set_mod_env_a(&mut self, attack: u32, decay: u32, end: u32) {
+    pub fn set_operator_mod_env(&mut self, op_index: usize, attack: u32, decay: u32, end: u32) {
+        if op_index >= 4 { return; }
         for v in &mut self.voices {
-            v.mod_env_a = ModEnvelope::new_from_values(attack, decay, end);
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn set_mod_env_b(&mut self, attack: u32, decay: u32, end: u32) {
-        for v in &mut self.voices {
-            v.mod_env_b = ModEnvelope::new_from_values(attack, decay, end);
+            v.set_operator_mod_env(op_index, attack, decay, end);
         }
     }
 
@@ -384,6 +390,42 @@ pub fn set_amp_env(&mut self,
         for v in &mut self.voices { v.set_global_feedback(fb); }
     }
 
+    /// Set feedback for a specific operator (0-3) across all voices.
+    #[wasm_bindgen]
+    pub fn set_operator_feedback(&mut self, op_index: usize, feedback: f32) {
+        if op_index >= 4 { return; }
+        for v in &mut self.voices {
+            v.set_operator_feedback(op_index, feedback);
+        }
+    }
+
+    /// Set detune in cents for a specific operator (0-3) across all voices.
+    #[wasm_bindgen]
+    pub fn set_operator_detune(&mut self, op_index: usize, cents: f32) {
+        if op_index >= 4 { return; }
+        for v in &mut self.voices {
+            v.set_operator_detune(op_index, cents);
+        }
+    }
+
+    /// Set harm for a specific operator (0-3) across all voices.
+    #[wasm_bindgen]
+    pub fn set_operator_harm(&mut self, op_index: usize, harm: f32) {
+        if op_index >= 4 { return; }
+        for v in &mut self.voices {
+            v.set_operator_harm(op_index, harm);
+        }
+    }
+
+    /// Set output level for a specific operator (0-3) across all voices.
+    #[wasm_bindgen]
+    pub fn set_operator_level(&mut self, op_index: usize, level: f32) {
+        if op_index >= 4 { return; }
+        for v in &mut self.voices {
+            v.set_operator_level(op_index, level);
+        }
+    }
+
     #[wasm_bindgen]
     pub fn set_harm(&mut self, h: f32) {
         self.harm = h;
@@ -396,6 +438,37 @@ pub fn set_amp_env(&mut self,
         let algo = self.algorithms[idx].clone();
         for v in &mut self.voices { v.set_algorithm(algo.clone()); }
         self.current_algo = idx;                         //  ← remember it
+    }
+
+    /// Accept arbitrary routing from the UI canvas.
+    /// `mod_flat`: flat pairs [src0, dst0, src1, dst1, ...]
+    /// `carrier_flat`: operator indices that output audio [op0, op1, ...]
+    #[wasm_bindgen]
+    pub fn set_custom_routing(&mut self, mod_flat: &[u32], carrier_flat: &[u32]) {
+        let modulations: Vec<(usize, usize)> = mod_flat
+            .chunks(2)
+            .filter(|c| c.len() == 2 && (c[0] as usize) < 4 && (c[1] as usize) < 4)
+            .map(|c| (c[0] as usize, c[1] as usize))
+            .collect();
+
+        let carriers: Vec<usize> = carrier_flat.iter()
+            .map(|&op| op as usize)
+            .filter(|&op| op < 4)
+            .collect();
+
+        let algo = FMAlgorithm::custom(modulations.clone(), carriers.clone());
+
+        let mod_str: Vec<String> = modulations.iter().map(|(s,d)| format!("{}→{}", s, d)).collect();
+        let carrier_str: Vec<String> = carriers.iter().map(|c| c.to_string()).collect();
+        let out_str: Vec<String> = algo.output_routing.iter().map(|(op,ch)| format!("op{}→{}", op, ch)).collect();
+        console::log_1(&format!(
+            "[engine] set_custom_routing — mods: [{}], carriers: [{}], output: [{}]",
+            mod_str.join(", "),
+            carrier_str.join(", "),
+            out_str.join(", "),
+        ).into());
+
+        for v in &mut self.voices { v.set_algorithm(algo.clone()); }
     }
     
 
@@ -420,9 +493,15 @@ pub fn set_amp_env(&mut self,
                 .unwrap_or(0)
         };
 
-        // Only trigger filter envelope on the first active voice (avoid retriggering)
+        // Check if any voices are active BEFORE triggering new note (for legato detection)
         let any_active = self.voices.iter().any(|v| v.is_active());
-        self.voices[idx].note_on(note_id, freq);
+
+        // Pass last note frequency and active state for portamento continuity
+        let pitch_mul = 2_f32.powi(self.octave_shift);
+        let adjusted_freq = freq * pitch_mul;
+        self.voices[idx].note_on(note_id, freq, self.last_note_frequency, any_active);
+        self.last_note_frequency = adjusted_freq;  // Track for next note
+
         if !any_active {
             self.filter_l.note_on();
             self.filter_r.note_on();
@@ -491,6 +570,41 @@ pub fn set_amp_env(&mut self,
     #[wasm_bindgen]
     pub fn set_volume(&mut self, v: f32) {
         self.volume = v.clamp(0.0, 127.0);
+    }
+
+    #[wasm_bindgen]
+    pub fn set_portamento_time(&mut self, time: f32) {
+        self.portamento_time = time.clamp(0.0, 127.0);
+        for v in &mut self.voices {
+            v.set_portamento_time(time);
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn set_pitch_bend_range(&mut self, range: f32) {
+        self.pitch_bend_range = range.clamp(0.0, 24.0);
+        // Recalculate pitch bend multiplier with new range
+        self.apply_pitch_bend();
+    }
+
+    #[wasm_bindgen]
+    pub fn set_pitch_bend(&mut self, value: f32) {
+        // Value should be -1.0 (full down) to +1.0 (full up), with 0.0 = center
+        self.pitch_bend_value = value.clamp(-1.0, 1.0);
+        self.apply_pitch_bend();
+    }
+
+    /// Internal helper to calculate and apply pitch bend to all voices
+    fn apply_pitch_bend(&mut self) {
+        // Calculate semitone offset: bend_value (-1 to +1) * range (in semitones)
+        let semitones = self.pitch_bend_value * self.pitch_bend_range;
+        // Convert semitones to frequency multiplier: 2^(semitones/12)
+        let multiplier = 2_f32.powf(semitones / 12.0);
+
+        // Apply to all voices
+        for voice in &mut self.voices {
+            voice.set_pitch_bend_multiplier(multiplier);
+        }
     }
 
     #[wasm_bindgen]

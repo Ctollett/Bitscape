@@ -1,0 +1,70 @@
+/* ─── FM Canvas Container ─────────────────────────────────────────────────── */
+.fm-canvas-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+.fm-canvas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0d0d1a;
+  border: 1px solid #2a2a3a;
+  border-radius: 12px;
+  overflow: visible;
+  touch-action: none;
+}
+
+/* ─── SVG Overlay ─────────────────────────────────────────────────────────── */
+.fm-canvas-svg {
+  pointer-events: none;
+}
+
+/* ─── Operator Nodes ──────────────────────────────────────────────────────── */
+.operator-node {
+  transition: box-shadow 0.15s ease;
+}
+
+.operator-node:hover {
+  box-shadow: 0 0 12px rgba(102, 119, 204, 0.4);
+}
+
+.operator-node:active {
+  cursor: grabbing;
+}
+
+/* ─── Connection Lines ────────────────────────────────────────────────────── */
+.connection-line:hover line:not([stroke="transparent"]) {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* ─── Self Loops ──────────────────────────────────────────────────────────── */
+.self-loop:hover circle {
+  filter: drop-shadow(0 0 4px #ff9966);
+}
+
+/* ─── Detail Panel ────────────────────────────────────────────────────────── */
+.operator-detail-panel {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Status Bar ──────────────────────────────────────────────────────────── */
+.fm-canvas-status {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+}
+
+/* ─── Ratio Ring ──────────────────────────────────────────────────────────── */
+.ratio-ring {
+  pointer-events: auto;
+}
+
+.ratio-ring:hover circle:last-of-type {
+  fill: #8899dd;
+}

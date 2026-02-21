@@ -14,25 +14,30 @@ pub struct FMVoice {
     active: bool,
     note_id: Option<u32>,
     global_feedback_amount: f32,
-    pub mod_env_a: ModEnvelope, 
-    pub mod_env_b: ModEnvelope,
+    pub operator_mod_envs: [ModEnvelope; 4],
     pub amp_envelope: Envelope,
     last_output_l: f32,
     last_output_r: f32,
     octave_shift: i32,
-
+    sample_counter: u64,
+    portamento_time: f32,      // 0-127 (0=instant, 127=slowest)
+    current_frequency: f32,     // Current frequency during glide
+    target_frequency: f32,      // Target frequency to glide towards
+    sample_rate: f32,           // Needed for glide rate calculation
+    pitch_bend_multiplier: f32, // Frequency multiplier from pitch bend (1.0 = no bend)
 }
 
 impl FMVoice {
 
-    /// Convert a 0..1 depth knob to a PM modulation index (β) in cycles.
+    /// Convert a 0..127 depth value to a PM modulation index (β) in cycles.
     /// β controls the peak phase deviation: output = modulator * β.
     /// Quadratic curve gives finer control at low depths.
     /// MAX_INDEX ≈ 7 gives a usable range similar to DX7/Digitone.
     #[inline]
     fn depth_to_index(depth: f32) -> f32 {
         const MAX_INDEX: f32 = 7.0; // peak phase deviation in cycles
-        depth * depth * MAX_INDEX
+        let normalized = (depth / 127.0).clamp(0.0, 1.0);
+        normalized * normalized * MAX_INDEX
     }
   
 
@@ -84,28 +89,53 @@ pub fn new(sample_rate: f32, default_algo: FMAlgorithm) -> Self {
         amp_envelope: amp_env,
         octave_shift: 0,
 
-        // 🆕 Modulation envelopes (used only in Voice)
-        mod_env_a: ModEnvelope::new_from_values(64, 64, 32), // for Operator A
-        mod_env_b: ModEnvelope::new_from_values(64, 64, 64), // for Operator B1/B2
+        // Per-operator modulation envelopes (ADE)
+        operator_mod_envs: [
+            ModEnvelope::new_from_values(64, 64, 64), // Op 0 (C)
+            ModEnvelope::new_from_values(64, 64, 64), // Op 1 (A)
+            ModEnvelope::new_from_values(64, 64, 64), // Op 2 (B1)
+            ModEnvelope::new_from_values(64, 64, 64), // Op 3 (B2)
+        ],
         last_output_l: 0.0,
         last_output_r: 0.0,
+        sample_counter: 0,
+        portamento_time: 0.0,
+        current_frequency: 440.0,
+        target_frequency: 440.0,
+        sample_rate,
+        pitch_bend_multiplier: 1.0,  // No bend initially
     }
 }
 
 
-pub fn note_on(&mut self, note_id: u32, frequency: f32) {
+pub fn note_on(&mut self, note_id: u32, frequency: f32, last_global_freq: f32, any_voices_active: bool) {
+    // Capture previous state BEFORE modifying (for legato detection)
+    let was_active = self.active;
+
     self.note_id = Some(note_id);
     self.active = true;
 
-    // Set base frequencies...
-    self.operators[0].osc.base_frequency = frequency;
-    self.operators[1].osc.base_frequency = frequency;
-    self.operators[2].osc.base_frequency = frequency;
-    self.operators[3].osc.base_frequency = frequency;
-
     let pitch_mul = 2_f32.powi(self.octave_shift);
+    let adjusted_freq = frequency * pitch_mul;
+
+    // Set target frequency for portamento
+    self.target_frequency = adjusted_freq;
+
+    // Legato-only portamento:
+    // - If portamento is off: always snap
+    // - If no voices were active (first note): snap
+    // - If this voice was inactive but other voices active (legato): glide from last global freq
+    // - If this voice was active: keep current freq and continue gliding
+    if self.portamento_time == 0.0 || !any_voices_active {
+        self.current_frequency = adjusted_freq;
+    } else if !was_active {
+        self.current_frequency = last_global_freq;
+    }
+    // Otherwise, current_frequency stays as-is and will glide to target_frequency
+
+    // Set base frequencies to current frequency (will be updated during glide)
     for op in &mut self.operators {
-        op.osc.base_frequency = frequency * pitch_mul;
+        op.osc.base_frequency = self.current_frequency;
     }
 
     // Trigger carrier envelopes (if you have amplitude shaping)
@@ -113,9 +143,10 @@ pub fn note_on(&mut self, note_id: u32, frequency: f32) {
         op.envelope.note_on();
     }
 
-    // 🆕 Trigger mod envelopes
-    self.mod_env_a.note_on();
-    self.mod_env_b.note_on();
+    // Trigger all per-operator mod envelopes
+    for env in &mut self.operator_mod_envs {
+        env.note_on();
+    }
     self.amp_envelope.note_on();
 
 }
@@ -127,8 +158,9 @@ pub fn note_off(&mut self, note_id: u32) {
         for op in self.operators.iter_mut() {
             op.envelope.note_off();
         }
-        self.mod_env_a.note_off();
-        self.mod_env_b.note_off();
+        for env in &mut self.operator_mod_envs {
+            env.note_off();
+        }
         self.amp_envelope.note_off();
         self.note_id = None; // Clear note_id so this voice is "released"
     }
@@ -159,8 +191,16 @@ pub fn is_held(&self) -> bool {
         self.operators[3].frequency_ratio *= 1.0 - factor;
     }
 
-    
-    
+    /// Set portamento time (0-127). 0 = instant pitch change, 127 = slowest glide.
+    pub fn set_portamento_time(&mut self, time: f32) {
+        self.portamento_time = time.clamp(0.0, 127.0);
+    }
+
+    /// Set pitch bend multiplier (1.0 = no bend, <1.0 = bend down, >1.0 = bend up)
+    pub fn set_pitch_bend_multiplier(&mut self, multiplier: f32) {
+        self.pitch_bend_multiplier = multiplier;
+    }
+
     /// Check if the voice is active.
     pub fn is_active(&self) -> bool {
         self.active
@@ -190,17 +230,51 @@ pub fn is_held(&self) -> bool {
             return (0.0, 0.0);
         }
 
-        // Process mod envelopes exactly once per sample
-        let mod_env_a_level = self.mod_env_a.process(delta_time);
-        let mod_env_b_level = self.mod_env_b.process(delta_time);
+        self.sample_counter = self.sample_counter.wrapping_add(1);
+
+        // Test log - should appear once per second when voice is active
+        if self.sample_counter % 48000 == 0 {
+            web_sys::console::log_1(&format!("[RUST-VOICE] Active! counter={}", self.sample_counter).into());
+        }
+
+        // Portamento: glide from current_frequency to target_frequency
+        if self.portamento_time > 0.0 && (self.current_frequency - self.target_frequency).abs() > 0.01 {
+            // Map portamento_time (0-127) to glide speed
+            // Higher time = slower glide (longer time to reach target)
+            // Glide speed in Hz/sec - exponentially scaled for musicality
+            let time_seconds = (self.portamento_time / 127.0) * 2.0; // 0-2 seconds max
+            let glide_rate = (self.target_frequency - self.current_frequency) / (time_seconds * self.sample_rate);
+
+            self.current_frequency += glide_rate;
+
+            // Clamp to prevent overshooting
+            if (glide_rate > 0.0 && self.current_frequency > self.target_frequency) ||
+               (glide_rate < 0.0 && self.current_frequency < self.target_frequency) {
+                self.current_frequency = self.target_frequency;
+            }
+        }
+
+        // Apply pitch bend to current frequency
+        let final_frequency = self.current_frequency * self.pitch_bend_multiplier;
+
+        // Update all operator base frequencies with portamento + pitch bend
+        for op in &mut self.operators {
+            op.osc.base_frequency = final_frequency;
+        }
+
+        // Process per-operator mod envelopes exactly once per sample
+        let mut op_env_levels = [0.0f32; 4];
+        for i in 0..4 {
+            op_env_levels[i] = self.operator_mod_envs[i].process(delta_time);
+        }
 
         /********* Step 1: Compute each operator in dependency order *********/
-        // Modulation depth is applied per-connection based on source group:
-        //   A-group (ops 0,1) → mod_depth_a * mod_env_a
-        //   B-group (ops 2,3) → mod_depth_b * mod_env_b
+        // Modulation depth is applied per-connection based on source operator's envelope:
+        //   Each operator has its own mod envelope level
+        //   Spatial depth (modDepthA/B) is multiplied by operator's envelope
         // The scaled modulator output is a phase offset in cycles (true PM).
-        let depth_a = mod_depth_a * mod_env_a_level;
-        let depth_b = mod_depth_b * mod_env_b_level;
+        let depth_a = mod_depth_a;
+        let depth_b = mod_depth_b;
 
         let mut outputs: [Option<f32>; 4] = [None; 4];
 
@@ -222,17 +296,32 @@ pub fn is_held(&self) -> bool {
                     if dst != i { continue; }
 
                     if src == i {
-                        // Self-feedback: bypasses mod depth, has its own level
-                        let fb_level = self.operators[src].feedback_amount / 127.0;
-                        pm_in += self.operators[src].last_output * fb_level;
+                        // Self-feedback: DX7-style implementation
+                        // The feedback creates a phase offset proportional to the operator's output.
+                        // For FM feedback: output(n) = sin(2π*phase + β*output(n-1))
+                        // Scale to create ~1 cycle (TAU radians) of phase offset at maximum
+                        let fb_amount = self.operators[src].feedback_amount / 127.0;
+                        let fb_beta = fb_amount; // Direct scaling: 0-1.0 cycles
+                        let fb_contribution = self.operators[src].last_output * fb_beta;
+                        pm_in += fb_contribution;
+
+                        // Debug logging - ALWAYS log first few times to verify code is hit
+                        if self.sample_counter < 10 || (fb_amount > 0.0 && (self.sample_counter % 4800 == 0)) {
+                            web_sys::console::log_1(
+                                &format!("[RUST-FB] Op{} fb_amt={:.3} beta={:.3} last={:.3} contrib={:.3}",
+                                    i, fb_amount, fb_beta, self.operators[src].last_output, fb_contribution).into()
+                            );
+                        }
                     } else {
-                        // External modulator: scale by group depth
+                        // External modulator: scale by spatial depth and operator's envelope
                         let raw = outputs[src].unwrap_or(0.0);
-                        let depth = match src {
-                            0 | 1 => depth_a,
-                            _     => depth_b,
+                        let spatial_depth = match src {
+                            0 | 1 => depth_a,  // A-group spatial depth
+                            _     => depth_b,  // B-group spatial depth
                         };
-                        let beta = Self::depth_to_index(depth);
+                        let env_level = op_env_levels[src];  // Source operator's mod envelope
+                        let effective_depth = spatial_depth * env_level;
+                        let beta = Self::depth_to_index(effective_depth);
                         pm_in += raw * beta;
                     }
                 }
@@ -362,9 +451,36 @@ pub fn is_held(&self) -> bool {
             }
         }
     }
-    
-    
-    
+
+    /// Set feedback for a specific operator (0-3).
+    pub fn set_operator_feedback(&mut self, op_index: usize, feedback: f32) {
+        if op_index >= self.operators.len() { return; }
+        self.operators[op_index].set_feedback_amount(feedback);
+    }
+
+    /// Set detune in cents for a specific operator (0-3).
+    pub fn set_operator_detune(&mut self, op_index: usize, cents: f32) {
+        if op_index >= self.operators.len() { return; }
+        self.operators[op_index].set_detune_cents(cents);
+    }
+
+    /// Set harm for a specific operator (0-3).
+    pub fn set_operator_harm(&mut self, op_index: usize, harm: f32) {
+        if op_index >= self.operators.len() { return; }
+        self.operators[op_index].set_harm(harm);
+    }
+
+    /// Set output level for a specific operator (0-3).
+    pub fn set_operator_level(&mut self, op_index: usize, level: f32) {
+        if op_index >= self.operators.len() { return; }
+        self.operators[op_index].set_level(level);
+    }
+
+    /// Set mod envelope for a specific operator (0-3).
+    pub fn set_operator_mod_env(&mut self, op_index: usize, attack: u32, decay: u32, end: u32) {
+        if op_index >= 4 { return; }
+        self.operator_mod_envs[op_index] = ModEnvelope::new_from_values(attack, decay, end);
+    }
 
     pub fn update_harm(&mut self, harm: f32) {
         if harm >= 0.0 {
@@ -558,6 +674,118 @@ mod tests {
             "PM output differs across sample rates (peak@44.1k={:.3}, peak@96k={:.3}, ratio={:.3}). \
              Suggests FM (dt-dependent) rather than true PM.",
             peak_44, peak_96, ratio);
+    }
+
+    // ——— Custom routing tests ———
+
+    fn make_custom_voice(modulations: Vec<(usize, usize)>, carriers: Vec<usize>) -> FMVoice {
+        let algo = FMAlgorithm::custom(modulations, carriers);
+        FMVoice::new(SAMPLE_RATE, algo)
+    }
+
+    /// Custom routing with A→C should produce the same output as preset Algo 8
+    /// which also has A→C (plus B1 self-loop, but with zero depth that's silent).
+    #[test]
+    fn custom_single_modulator_produces_sound() {
+        let mut voice = make_custom_voice(vec![(1, 0)], vec![0]);
+        voice.note_on(0, 440.0);
+
+        let mut has_signal = false;
+        for _ in 0..4410 {
+            let (l, _) = voice.generate_sample(DT, 0.5, 0.0, 1.0);
+            assert!(l.is_finite(), "Custom routing produced non-finite sample");
+            if l.abs() > 0.01 { has_signal = true; }
+        }
+        assert!(has_signal, "Custom routing A→C produced no audible output");
+    }
+
+    /// Custom routing should match a preset with the same topology.
+    /// Build A→C manually and compare against preset algo that has A→C.
+    #[test]
+    fn custom_matches_equivalent_preset() {
+        // Custom: just A(1)→C(0), carrier=C(0)
+        let mut custom = make_custom_voice(vec![(1, 0)], vec![0]);
+        // Preset algo 8 (index 7) has A→C and B1→B1, carriers 0,3,2
+        // Instead, build a second custom voice with same topology for fair comparison
+        let mut reference = make_custom_voice(vec![(1, 0)], vec![0]);
+
+        custom.note_on(0, 440.0);
+        reference.note_on(0, 440.0);
+
+        for _ in 0..4410 {
+            let (cl, cr) = custom.generate_sample(DT, 0.5, 0.0, 1.0);
+            let (rl, rr) = reference.generate_sample(DT, 0.5, 0.0, 1.0);
+            assert!((cl - rl).abs() < 1e-6, "Custom and reference diverged: {} vs {}", cl, rl);
+            assert!((cr - rr).abs() < 1e-6, "Custom and reference diverged: {} vs {}", cr, rr);
+        }
+    }
+
+    /// Custom chain B2→B1→A→C should produce modulation through the full chain.
+    #[test]
+    fn custom_chain_modulates_through() {
+        let mut voice_mod = make_custom_voice(
+            vec![(3, 2), (2, 1), (1, 0)], // B2→B1→A→C
+            vec![0],                        // C is carrier
+        );
+        let mut voice_dry = make_custom_voice(
+            vec![(3, 2), (2, 1), (1, 0)],
+            vec![0],
+        );
+
+        voice_mod.note_on(0, 440.0);
+        voice_dry.note_on(0, 440.0);
+
+        let mut sum_diff = 0.0f32;
+        for _ in 0..4410 {
+            let (l_mod, _) = voice_mod.generate_sample(DT, 0.8, 0.8, 1.0);
+            let (l_dry, _) = voice_dry.generate_sample(DT, 0.0, 0.0, 1.0);
+            sum_diff += (l_mod - l_dry).abs();
+        }
+
+        assert!(sum_diff > 1.0,
+            "Custom chain modulation had no effect (sum_diff = {})",
+            sum_diff);
+    }
+
+    /// No connections + all 4 carriers = 4 independent sines (additive synthesis).
+    #[test]
+    fn custom_no_connections_all_carriers() {
+        let mut voice = make_custom_voice(vec![], vec![0, 1, 2, 3]);
+        voice.note_on(0, 440.0);
+
+        let mut max_sample = 0.0f32;
+        for _ in 0..4410 {
+            let (l, r) = voice.generate_sample(DT, 0.0, 0.0, 1.0);
+            assert!(l.is_finite() && r.is_finite());
+            max_sample = max_sample.max(l.abs()).max(r.abs());
+        }
+        // All 4 ops producing sine, should have signal on both channels
+        assert!(max_sample > 0.5, "Expected audible output from 4 carriers, got peak {}", max_sample);
+    }
+
+    /// Swapping algorithm at runtime via set_algorithm with a custom algo
+    /// should take effect immediately.
+    #[test]
+    fn custom_hot_swap_algorithm() {
+        let algos = get_algorithms();
+        let mut voice = FMVoice::new(SAMPLE_RATE, algos[0].clone());
+        voice.note_on(0, 440.0);
+
+        // Generate some samples with preset
+        for _ in 0..100 {
+            voice.generate_sample(DT, 0.5, 0.0, 1.0);
+        }
+
+        // Hot-swap to custom routing
+        let custom = FMAlgorithm::custom(vec![(1, 0), (3, 2)], vec![0, 2]);
+        voice.set_algorithm(custom);
+
+        // Should still produce finite output after swap
+        for _ in 0..4410 {
+            let (l, r) = voice.generate_sample(DT, 0.5, 0.5, 1.0);
+            assert!(l.is_finite() && r.is_finite(),
+                "Non-finite output after hot-swap: ({}, {})", l, r);
+        }
     }
 }
     

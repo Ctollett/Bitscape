@@ -18,6 +18,24 @@ function getStringFromWasm0(ptr, len) {
     return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
 }
 
+let cachedUint32ArrayMemory0 = null;
+
+function getUint32ArrayMemory0() {
+    if (cachedUint32ArrayMemory0 === null || cachedUint32ArrayMemory0.byteLength === 0) {
+        cachedUint32ArrayMemory0 = new Uint32Array(wasm.memory.buffer);
+    }
+    return cachedUint32ArrayMemory0;
+}
+
+let WASM_VECTOR_LEN = 0;
+
+function passArray32ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 4, 4) >>> 0;
+    getUint32ArrayMemory0().set(arg, ptr / 4);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+
 const SynthFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_synth_free(ptr >>> 0, 1));
@@ -132,22 +150,6 @@ export class Synth {
         wasm.synth_set_lfo2_mode(this.__wbg_ptr, _m);
     }
     /**
-     * @param {number} attack
-     * @param {number} decay
-     * @param {number} end
-     */
-    set_mod_env_a(attack, decay, end) {
-        wasm.synth_set_mod_env_a(this.__wbg_ptr, attack, decay, end);
-    }
-    /**
-     * @param {number} attack
-     * @param {number} decay
-     * @param {number} end
-     */
-    set_mod_env_b(attack, decay, end) {
-        wasm.synth_set_mod_env_b(this.__wbg_ptr, attack, decay, end);
-    }
-    /**
      * @param {number} drv
      */
     set_overdrive(drv) {
@@ -183,6 +185,12 @@ export class Synth {
      */
     set_lfo2_speed(v) {
         wasm.synth_set_lfo2_speed(this.__wbg_ptr, v);
+    }
+    /**
+     * @param {number} value
+     */
+    set_pitch_bend(value) {
+        wasm.synth_set_pitch_bend(this.__wbg_ptr, value);
     }
     /**
      * @param {number} m
@@ -277,10 +285,32 @@ export class Synth {
         wasm.synth_set_lfo2_waveform(this.__wbg_ptr, w);
     }
     /**
+     * Set harm for a specific operator (0-3) across all voices.
+     * @param {number} op_index
+     * @param {number} harm
+     */
+    set_operator_harm(op_index, harm) {
+        wasm.synth_set_operator_harm(this.__wbg_ptr, op_index, harm);
+    }
+    /**
      * @param {boolean} on
      */
     set_chorus_enabled(on) {
         wasm.synth_set_chorus_enabled(this.__wbg_ptr, on);
+    }
+    /**
+     * Accept arbitrary routing from the UI canvas.
+     * `mod_flat`: flat pairs [src0, dst0, src1, dst1, ...]
+     * `carrier_flat`: operator indices that output audio [op0, op1, ...]
+     * @param {Uint32Array} mod_flat
+     * @param {Uint32Array} carrier_flat
+     */
+    set_custom_routing(mod_flat, carrier_flat) {
+        const ptr0 = passArray32ToWasm0(mod_flat, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray32ToWasm0(carrier_flat, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.synth_set_custom_routing(this.__wbg_ptr, ptr0, len0, ptr1, len1);
     }
     /**
      * Delay feedback (0.0–0.99)
@@ -300,6 +330,14 @@ export class Synth {
      */
     set_filter_sustain(v) {
         wasm.synth_set_filter_sustain(this.__wbg_ptr, v);
+    }
+    /**
+     * Set output level for a specific operator (0-3) across all voices.
+     * @param {number} op_index
+     * @param {number} level
+     */
+    set_operator_level(op_index, level) {
+        wasm.synth_set_operator_level(this.__wbg_ptr, op_index, level);
     }
     /**
      * @param {number} d
@@ -331,6 +369,20 @@ export class Synth {
      */
     set_lfo2_multiplier(m) {
         wasm.synth_set_lfo2_multiplier(this.__wbg_ptr, m);
+    }
+    /**
+     * Set detune in cents for a specific operator (0-3) across all voices.
+     * @param {number} op_index
+     * @param {number} cents
+     */
+    set_operator_detune(op_index, cents) {
+        wasm.synth_set_operator_detune(this.__wbg_ptr, op_index, cents);
+    }
+    /**
+     * @param {number} time
+     */
+    set_portamento_time(time) {
+        wasm.synth_set_portamento_time(this.__wbg_ptr, time);
     }
     /**
      * @param {number} mod1
@@ -377,6 +429,22 @@ export class Synth {
         wasm.synth_set_lfo2_start_phase(this.__wbg_ptr, p);
     }
     /**
+     * Set mod envelope for a specific operator (0-3) across all voices.
+     * @param {number} op_index
+     * @param {number} attack
+     * @param {number} decay
+     * @param {number} end
+     */
+    set_operator_mod_env(op_index, attack, decay, end) {
+        wasm.synth_set_operator_mod_env(this.__wbg_ptr, op_index, attack, decay, end);
+    }
+    /**
+     * @param {number} range
+     */
+    set_pitch_bend_range(range) {
+        wasm.synth_set_pitch_bend_range(this.__wbg_ptr, range);
+    }
+    /**
      * high-pass cutoff on the delayed signal
      * @param {number} hz
      */
@@ -388,6 +456,14 @@ export class Synth {
      */
     set_filter_env_amount(v) {
         wasm.synth_set_filter_env_amount(this.__wbg_ptr, v);
+    }
+    /**
+     * Set feedback for a specific operator (0-3) across all voices.
+     * @param {number} op_index
+     * @param {number} feedback
+     */
+    set_operator_feedback(op_index, feedback) {
+        wasm.synth_set_operator_feedback(this.__wbg_ptr, op_index, feedback);
     }
     /**
      * @param {number} op_index
@@ -536,6 +612,7 @@ function __wbg_init_memory(imports, memory) {
 function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
+    cachedUint32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
 
 
