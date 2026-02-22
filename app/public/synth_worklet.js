@@ -26,6 +26,36 @@ class SynthProcessor extends AudioWorkletProcessor {
         this.synth.note_off(d.args[0]);
       } else if (d.type === 'param') {
         this.synth[d.fn](...d.args);
+
+        // Relay routing debug info back to main thread (Safari can't see worklet console)
+        if (d.fn === 'set_custom_routing') {
+          const snap = this.synth.debug_snapshot();
+          this.port.postMessage({
+            type: 'debug_routing',
+            fn: d.fn,
+            algo_name: snap.algo_name,
+            algo_diagram: snap.algo_diagram,
+            mod_depth_a: snap.mod_depth_a,
+            mod_depth_b: snap.mod_depth_b,
+            ratio_c: snap.ratio_c,
+            ratio_a: snap.ratio_a,
+            ratio_b1: snap.ratio_b1,
+            ratio_b2: snap.ratio_b2,
+            feedback: snap.feedback,
+            carrier_mix: snap.carrier_mix,
+            op_wave: snap.op_wave,
+          });
+        }
+        // Relay feedback debug info when feedback is set
+        if (d.fn === 'set_operator_feedback') {
+          const snap = this.synth.debug_snapshot();
+          this.port.postMessage({
+            type: 'debug_feedback',
+            opIndex: d.args[0],
+            feedbackValue: d.args[1],
+            op_sample: snap.op_sample,
+          });
+        }
       }
     };
   }

@@ -8,6 +8,8 @@ pub struct FMOperator {
     pub frequency_ratio: f32,
     harm: f32,
     pub feedback_amount: f32,  // Store feedback level
+    pub detune_cents: f32,     // Detune in cents (±100)
+    pub level: f32,            // Output level 0-127
     pub last_output: f32,
     pub is_modulator: bool,
 }
@@ -20,7 +22,9 @@ impl FMOperator {
             envelope,
             frequency_ratio: 1.0,
             harm: 0.0,
-            feedback_amount: 0.0,  
+            feedback_amount: 0.0,
+            detune_cents: 0.0,
+            level: 127.0,
             last_output: 0.0,
             is_modulator: is_modulator,
         }
@@ -67,24 +71,27 @@ pub fn generate_sample_pm(
     /* 1. envelope ------------------------------------------------------- */
     let env_level = self.envelope.process(delta_time);
 
-    /* 2. base pitch ----------------------------------------------------- */
-    let base_freq = self.osc.base_frequency * self.frequency_ratio;
+    /* 2. base pitch with detune ----------------------------------------- */
+    // Convert cents to frequency multiplier: 2^(cents/1200)
+    let detune_multiplier = 2.0f32.powf(self.detune_cents / 1200.0);
+    let base_freq = self.osc.base_frequency * self.frequency_ratio * detune_multiplier;
     let phase_inc = base_freq * delta_time;  // cycles this sample
 
-    /* 3. true PM: add phase offset directly (no * dt) ------------------- */
-    self.osc.update_phase(phase_inc + pm_input);
+    /* 3. advance natural phase ------------------------------------------ */
+    self.osc.update_phase(phase_inc);
 
-    /* 4. raw oscillator sample ------------------------------------------ */
-    let mut sample = self.osc.compute_sample();
+    /* 4. compute sample with PM offset (NOT accumulated in phase) ------- */
+    let mut sample = self.osc.compute_sample_with_offset(pm_input);
 
     /* 5. HARM wave-folder (Digitone style) ------------------------------ */
     if self.harm != 0.0 {
         sample = Self::fold(sample, Self::harm_gain(self.harm));
     }
 
-    /* 6. store last output & apply envelope ----------------------------- */
+    /* 6. store last output & apply envelope + level --------------------- */
     self.last_output = sample;
-    sample * env_level
+    let level_multiplier = self.level / 127.0;  // 0-127 → 0.0-1.0
+    sample * env_level * level_multiplier
 }
 
 /// Legacy FM-style generate (kept for compatibility, prefer generate_sample_pm)
@@ -119,6 +126,10 @@ pub fn generate_sample(
         self.feedback_amount = amount.clamp(0.0, 127.0);
     }
 
+    pub fn set_detune_cents(&mut self, cents: f32) {
+        self.detune_cents = cents.clamp(-100.0, 100.0);
+    }
+
     pub fn set_as_modulator(&mut self) {
         self.is_modulator = true;
     }
@@ -127,5 +138,9 @@ pub fn generate_sample(
     pub fn set_harm(&mut self, harm: f32) {
         // New Digitone-style range −26 … +26
         self.harm = harm.clamp(-26.0, 26.0);
+    }
+
+    pub fn set_level(&mut self, level: f32) {
+        self.level = level.clamp(0.0, 127.0);
     }
 }

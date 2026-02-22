@@ -7,7 +7,7 @@ interface OperatorDetailPanelProps {
   onClose: () => void;
 }
 
-export function OperatorDetailPanel({ opIndex, onClose }: OperatorDetailPanelProps) {
+export function OperatorDetailPanel({ opIndex, onClose: _onClose }: OperatorDetailPanelProps) {
   const { patch, dispatch } = usePatch();
   const op = patch.operators[opIndex];
   const waveform = patch.operatorWaveforms[opIndex];

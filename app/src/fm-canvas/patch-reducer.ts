@@ -175,6 +175,12 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
     case 'SET_MASTER_PAN':
     return { ...state, masterPan: action.value };
 
+    case 'SET_MASTER_OVERDRIVE':
+      return { ...state, masterOverdrive: action.value };
+
+    case 'SET_OCTAVE':
+      return { ...state, octave: action.value };
+
     case 'SET_PORTAMENTO_TIME':
     return { ...state, portamentoTime: action.value };
 
@@ -189,6 +195,42 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
       next.operatorModEnv[action.opIndex] = { attack: action.attack, decay: action.decay, end: action.end };
       return next;
     }
+
+    case 'SET_FILTER_TYPE':
+      return { ...state, filterType: action.value };
+
+    case 'SET_FILTER_CUTOFF':
+      return { ...state, filterCutoff: action.value };
+
+    case 'SET_FILTER_RESONANCE':
+      return { ...state, filterResonance: action.value };
+
+    case 'SET_FILTER_ENV':
+      return {
+        ...state,
+        filterEnvAttack: action.attack,
+        filterEnvDecay: action.decay,
+        filterEnvSustain: action.sustain,
+        filterEnvRelease: action.release
+      };
+
+    case 'SET_FILTER_ENV_AMOUNT':
+      return { ...state, filterEnvAmount: action.value };
+
+    case 'SET_DELAY':
+      return { ...state, delayEnabled: action.enabled, delayMs: action.ms, delayFeedback: action.feedback, delayMix: action.mix };
+
+    case 'SET_REVERB':
+      return { ...state, reverbEnabled: action.enabled, reverbDecay: action.decay, reverbDamping: action.damping, reverbMix: action.mix };
+
+    case 'SET_CHORUS':
+      return { ...state, chorusEnabled: action.enabled, chorusDepth: action.depth, chorusSpeed: action.speed, chorusWidth: action.width, chorusHpfCutoff: action.hpfCutoff, chorusDelayMs: action.delayMs, chorusReverbSend: action.reverbSend };
+
+    case 'SET_LFO1':
+      return { ...state, lfo1Speed: action.speed, lfo1Depth: action.depth, lfo1Waveform: action.waveform, lfo1Mode: action.mode, lfo1Destination: action.destination, lfo1Multiplier: action.multiplier, lfo1Fade: action.fade };
+
+    case 'SET_LFO2':
+      return { ...state, lfo2Speed: action.speed, lfo2Depth: action.depth, lfo2Waveform: action.waveform, lfo2Mode: action.mode, lfo2Destination: action.destination, lfo2Multiplier: action.multiplier, lfo2Fade: action.fade };
 
     case 'LOAD_PATCH':
       return action.patch;

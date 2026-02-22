@@ -65,18 +65,63 @@ export function createInitialPatch(): FMCanvasPatch {
     detune: 0,
     ampAttack: 30,
     ampDecay: 40,
+    filterType: 0,             
+    filterCutoff: 64,      // slider 0-127, ~632 Hz (audible LP/HP starting point)
+    filterResonance: 4,    // slider 0-127, Q ≈ 0.73 (Butterworth)    
+    filterEnvAttack: 0,       
+    filterEnvDecay: 64,        
+    filterEnvSustain: 100,    
+    filterEnvRelease: 50,      
+    filterEnvAmount: 0, 
     ampSustain: 100,
     ampRelease: 50,
     masterVolume: 100,
     masterPan: 64,
+    masterOverdrive: 0,
+    octave: 0,
     portamentoTime: 0,
     pitchBendRange: 2,
     pitchBend: 0.0,
+
+    delayEnabled: false,
+    delayMs: 375,
+    delayFeedback: 0.4,
+    delayMix: 0.3,
+
+    reverbEnabled: false,
+    reverbDecay: 0.5,
+    reverbDamping: 0.5,
+    reverbMix: 0.3,
+
+    chorusEnabled: false,
+    chorusDepth: 0.3,
+    chorusSpeed: 1.0,
+    chorusWidth: 0.5,
+    chorusHpfCutoff: 200,
+    chorusDelayMs: 7,
+    chorusReverbSend: 0,
+
+    lfo1Speed: 2.0,
+    lfo1Depth: 0.3,
+    lfo1Waveform: 1,
+    lfo1Mode: 0,
+    lfo1Destination: 0,
+    lfo1Multiplier: 1,
+    lfo1Fade: 0,
+
+    lfo2Speed: 0.5,
+    lfo2Depth: 0.2,
+    lfo2Waveform: 0,
+    lfo2Mode: 0,
+    lfo2Destination: 19,
+    lfo2Multiplier: 1,
+    lfo2Fade: 0,
+
     operatorModEnv: [
-      { attack: 64, decay: 64, end: 64 },  // Op 0 (C)
-      { attack: 64, decay: 64, end: 64 },  // Op 1 (A)
-      { attack: 64, decay: 64, end: 64 },  // Op 2 (B1)
-      { attack: 64, decay: 64, end: 64 },  // Op 3 (B2)
+      { attack: 64, decay: 64, end: 64 }, 
+      { attack: 64, decay: 64, end: 64 },  
+      { attack: 64, decay: 64, end: 64 },  
+      { attack: 64, decay: 64, end: 64 },  
     ],
     operatorWaveforms: [0, 0, 0, 0],
   };

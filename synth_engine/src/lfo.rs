@@ -110,7 +110,7 @@ impl Lfo {
     pub fn set_waveform(&mut self, w: Waveform)          { self.waveform = w; }
     pub fn set_start_phase(&mut self, p: f32) { self.start_phase = p.clamp(0.0, 1.0); }
     pub fn set_mode(&mut self, m: LfoMode)     { self.mode = m; }
-    pub fn set_depth(&mut self, d: f32)        { self.depth = d.clamp(-1.0, 1.0); }
+    pub fn set_depth(&mut self, d: f32)        { self.depth = d; }
 
     pub fn current(&self) -> f32 {
         self.current

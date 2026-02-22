@@ -1,11 +1,8 @@
 import { useState, useRef } from 'react';
 import { usePatch } from './patch-context';
-import { getCarriers } from './algorithm-matcher';
-import { CANVAS_SIZE, OPERATOR_COLORS } from './constants';
+import { CANVAS_SIZE } from './constants';
 import { OperatorNode } from './OperatorNode';
-import { RatioRing } from './RatioRing';
 import { ConnectionLine } from './ConnectionLine';
-import { SelfLoopArc } from './SelfLoopArc';
 import { DraftConnection } from './DraftConnection';
 import { OperatorDetailPanel } from './OperatorDetailPanel';
 import type { Point } from './types';
@@ -48,7 +45,7 @@ if(interaction.mode === 'drawing-connection') {
   <div ref={canvasRef} onPointerUp={onPointerUp} onPointerMove={onPointerMove} className='fm-canvas' style={{position: 'relative', width: CANVAS_SIZE, height: CANVAS_SIZE}} onPointerDown={() => setSelectedOp(null)}>
     <svg style={{position: 'absolute', top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE, pointerEvents: 'none'}}>
 
-      {patch.connections.map((conn, i) => (
+      {patch.connections.map((conn) => (
         <ConnectionLine  src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
       dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst} onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
       ))}

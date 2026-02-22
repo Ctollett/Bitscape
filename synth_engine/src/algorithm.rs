@@ -33,6 +33,25 @@ impl FMAlgorithm {
     pub fn output_to_y(&self, op: usize) -> bool {
         self.output_routing.iter().any(|&(i, c)| i == op && c == 'Y')
     }
+
+    /// Build a custom algorithm from user-drawn connections.
+    /// `modulations`: flat pairs [src0, dst0, src1, dst1, ...]
+    /// `carriers`: operator indices that output audio
+    /// Any operator not in the carriers list is a pure modulator.
+    /// Carriers are routed: first to X, second to Y, rest alternate.
+    pub fn custom(modulations: Vec<(usize, usize)>, carriers: Vec<usize>) -> Self {
+        let output_routing: Vec<(usize, char)> = carriers.iter().enumerate()
+            .map(|(i, &op)| (op, if i % 2 == 0 { 'X' } else { 'Y' }))
+            .collect();
+
+        FMAlgorithm {
+            name: "Custom",
+            diagram: "User-defined routing",
+            modulations,
+            carriers,
+            output_routing,
+        }
+    }
 }
 
 /// Collection of algorithms – the index in this Vec is the number JS sends

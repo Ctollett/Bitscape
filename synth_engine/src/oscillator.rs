@@ -67,18 +67,27 @@ impl Oscillator {
 
     /// Compute the current sample based on phase and waveform.
     pub fn compute_sample(&self) -> f32 {
-        let angle = self.phase * TAU;
+        self.compute_sample_with_offset(0.0)
+    }
+
+    /// Compute a sample with a temporary phase offset (in cycles).
+    /// The offset is NOT stored - it only affects this sample.
+    /// This is essential for proper FM synthesis and feedback.
+    pub fn compute_sample_with_offset(&self, offset_cycles: f32) -> f32 {
+        // Apply offset to phase for THIS sample only
+        let effective_phase = ((self.phase + offset_cycles) % 1.0 + 1.0) % 1.0;
+        let angle = effective_phase * TAU;
 
         match self.wave {
             WaveType::Sine =>              angle.sin(),
 
-            WaveType::Square =>            if self.phase < 0.5 {  1.0 } else { -1.0 },
+            WaveType::Square =>            if effective_phase < 0.5 {  1.0 } else { -1.0 },
 
-            WaveType::Saw =>               2.0 * (self.phase - 0.5),
+            WaveType::Saw =>               2.0 * (effective_phase - 0.5),
 
-            WaveType::Triangle =>          1.0 - 4.0 * (self.phase - 0.5).abs(),
+            WaveType::Triangle =>          1.0 - 4.0 * (effective_phase - 0.5).abs(),
 
-            WaveType::Noise     => Self::fast_rand(),  
+            WaveType::Noise     => Self::fast_rand(),
         }
     }
 

@@ -30,7 +30,6 @@ export function GlobalControlPanel() {
       height: '220px',
       display: 'flex',
       borderRadius: '12px',
-      overflow: 'hidden',
       border: '1px solid #2a2a2a',
       background: '#141414',
     }}>
@@ -44,7 +43,7 @@ export function GlobalControlPanel() {
       </div>
 
       {/* Tabbed Section - To be implemented */}
-      <div style={{ flex: '0 0 600px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{display: 'flex', flexDirection: 'row'}}>
              {TABS.map((tab) => (
             <button style={{ color: 'white', cursor: 'pointer', backgroundColor: activeTab === tab.id ? "green" : "transparent", width: '100%', height: '24px'}} onClick={() => setActiveTab(tab.id)} key={tab.id}>{tab.name}</button>
@@ -54,7 +53,7 @@ export function GlobalControlPanel() {
           flex: 1,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          minWidth: 0,
           color: '#555',
           fontSize: '11px',
           textTransform: 'uppercase',

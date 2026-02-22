@@ -53,9 +53,55 @@ export interface FMCanvasPatch {
   ampRelease: number;       // 0-127
   masterVolume: number;
   masterPan: number;
+  masterOverdrive: number;   // 0.0-1.0
+  octave: number;            // -2 to +2
   portamentoTime: number;
   pitchBendRange: number;
-  pitchBend: number;        // -1.0 to +1.0 (pitch bend amount)
+  pitchBend: number;
+  filterType: number;
+  filterCutoff: number;
+  filterResonance: number;
+  filterEnvAttack: number;
+  filterEnvDecay: number;
+  filterEnvSustain: number;
+  filterEnvRelease: number;
+  filterEnvAmount: number;
+
+  // Effects
+  delayEnabled: boolean;
+  delayMs: number;         // 0-1000ms
+  delayFeedback: number;   // 0.0-0.99
+  delayMix: number;        // 0.0-1.0
+
+  reverbEnabled: boolean;
+  reverbDecay: number;     // 0.0-1.0
+  reverbDamping: number;   // 0.0-1.0
+  reverbMix: number;       // 0.0-1.0
+
+  chorusEnabled: boolean;
+  chorusDepth: number;     // 0.0-1.0
+  chorusSpeed: number;     // 0.1-10.0 Hz
+  chorusWidth: number;     // 0.0-1.0
+  chorusHpfCutoff: number;  // Hz
+  chorusDelayMs: number;    // ms
+  chorusReverbSend: number; // 0.0-1.0
+
+  // LFOs
+  lfo1Speed: number;        // 0.0-10.0 Hz
+  lfo1Depth: number;        // 0.0-1.0
+  lfo1Waveform: number;     // 0=Triangle,1=Sine,2=Square,3=Sawtooth,4=Exp,5=Ramp,6=Random
+  lfo1Mode: number;         // 0=Free,1=Trigger,2=Hold,3=One,4=Half
+  lfo1Destination: number;  // LfoDestination index
+  lfo1Multiplier: number;   // integer multiplier
+  lfo1Fade: number;         // -64 to 63
+
+  lfo2Speed: number;
+  lfo2Depth: number;
+  lfo2Waveform: number;
+  lfo2Mode: number;
+  lfo2Destination: number;
+  lfo2Multiplier: number;
+  lfo2Fade: number;
 
   // Per-operator mod envelopes (ADE: Attack, Decay, End level)
   operatorModEnv: [

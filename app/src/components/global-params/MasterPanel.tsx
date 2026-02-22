@@ -1,42 +1,64 @@
 import { usePatch } from '../../fm-canvas/patch-context';
 
+function Slider({ label, value, display, min, max, step, onChange }: {
+  label: string; value: number; display: string;
+  min: number; max: number; step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '100px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{label}</span>
+        <span style={{ fontSize: '10px', color: '#4a9eff' }}>{display}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ width: '100%', accentColor: '#4a9eff' }}
+      />
+    </div>
+  );
+}
 
 export function MasterPanel() {
-  const {patch, dispatch} = usePatch();
+  const { patch, dispatch } = usePatch();
 
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px'
+      width: '100%', height: '100%',
+      display: 'flex', alignItems: 'center',
+      gap: '24px', padding: '12px 24px',
     }}>
-      <div style={{ textAlign: 'start', display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'start', justifyContent: 'start' }}>
-        <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', marginBottom: '12px' }}>
-          Master Controls
-        </div>
-        <div style={{ color: '#666', fontSize: '11px', display: 'flex', flexDirection: 'column' }}>
-          <p>Volume: {patch.masterVolume}</p>
-          <input type='range' min="0" max="127" value={patch.masterVolume} onChange={(e) => dispatch({ type: 'SET_MASTER_VOLUME', value: Number(e.target.value) })} />
 
-          <p style={{ marginTop: '12px' }}>Pan: {patch.masterPan}</p>
-          <input type='range' min="0" max="127" value={patch.masterPan} onChange={(e) => dispatch({ type: 'SET_MASTER_PAN', value: Number(e.target.value) })} />
-          </div>
+      <Slider label="Volume" value={patch.masterVolume} display={patch.masterVolume.toString()}
+        min={0} max={127} step={1}
+        onChange={v => dispatch({ type: 'SET_MASTER_VOLUME', value: v })}
+      />
 
-          <div>
-          <p style={{ marginTop: '12px' }}>Portamento Time: {patch.portamentoTime}</p>
-          <input type='range' min="0" max="127" value={patch.portamentoTime} onChange={(e) => dispatch({ type: 'SET_PORTAMENTO_TIME', value: Number(e.target.value) })} />
+      <Slider label="Pan" value={patch.masterPan} display={patch.masterPan === 64 ? 'C' : patch.masterPan < 64 ? `L${64 - patch.masterPan}` : `R${patch.masterPan - 64}`}
+        min={0} max={127} step={1}
+        onChange={v => dispatch({ type: 'SET_MASTER_PAN', value: v })}
+      />
 
+      <Slider label="Overdrive" value={patch.masterOverdrive} display={`${Math.round(patch.masterOverdrive * 100)}%`}
+        min={0} max={1} step={0.01}
+        onChange={v => dispatch({ type: 'SET_MASTER_OVERDRIVE', value: v })}
+      />
 
-          <p style={{ marginTop: '12px' }}>Pitch Bend Range: {patch.pitchBendRange} semitones</p>
-          <input type='range' min="0" max="24" value={patch.pitchBendRange} onChange={(e) => dispatch({ type: 'SET_PITCH_BEND_RANGE', value: Number(e.target.value) })} />
+      <Slider label="Octave" value={patch.octave} display={patch.octave === 0 ? '0' : patch.octave > 0 ? `+${patch.octave}` : `${patch.octave}`}
+        min={-2} max={2} step={1}
+        onChange={v => dispatch({ type: 'SET_OCTAVE', value: v })}
+      />
 
-          <p style={{ marginTop: '12px' }}>Pitch Bend: {patch.pitchBend.toFixed(2)}</p>
-          <input type='range' min="-1" max="1" step="0.01" value={patch.pitchBend} onChange={(e) => dispatch({ type: 'SET_PITCH_BEND', value: Number(e.target.value) })} />
-          </div>
-        </div>
-      </div>
+      <Slider label="Portamento" value={patch.portamentoTime} display={patch.portamentoTime.toString()}
+        min={0} max={127} step={1}
+        onChange={v => dispatch({ type: 'SET_PORTAMENTO_TIME', value: v })}
+      />
+
+      <Slider label="PB Range" value={patch.pitchBendRange} display={`${patch.pitchBendRange} st`}
+        min={0} max={24} step={1}
+        onChange={v => dispatch({ type: 'SET_PITCH_BEND_RANGE', value: v })}
+      />
+
+    </div>
   );
 }

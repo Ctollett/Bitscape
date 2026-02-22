@@ -41,10 +41,10 @@ isSelected: boolean
 
 export function OperatorNode({
   opIndex,
-  isCarrier,
+  isCarrier: _isCarrier,
   onStartConnection,
   onEndConnection,
-  onOpenDetail,
+  onOpenDetail: _onOpenDetail,
   onSelect,
   isSelected,
 }: OperatorNodeProps) {
@@ -55,7 +55,6 @@ export function OperatorNode({
   const dragStartRef = useRef({ x: 0, y: 0 })
   const rafRef = useRef(0)
   const pendingPos = useRef({x: 0, y: 0})
-  const RING_RADIUS = NODE_RADIUS * 1.3
 
 
   const flushPosition = useCallback(() => {

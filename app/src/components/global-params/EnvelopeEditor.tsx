@@ -28,25 +28,20 @@ export function EnvelopeEditor({
   const graphWidth = width - padding * 2;
   const graphHeight = height - padding * 2;
 
-  // Ableton-style proportional layout based on time values
-  // Normalize time values to create proportional widths
-  const attackNorm = Math.max(1, attack);
-  const decayNorm = Math.max(1, decay);
-  const releaseNorm = Math.max(1, release);
-  const sustainTimeNorm = 40; // Fixed sustain section width
-  const totalNorm = attackNorm + decayNorm + sustainTimeNorm + releaseNorm;
-
-  const attackWidth = (attackNorm / totalNorm) * graphWidth;
-  const decayWidth = (decayNorm / totalNorm) * graphWidth;
-  const sustainWidth = (sustainTimeNorm / totalNorm) * graphWidth;
-  const releaseWidth = (releaseNorm / totalNorm) * graphWidth;
+  // Fixed-segment layout: each segment has a max pixel width.
+  // Handle positions directly encode parameter values so they visually
+  // move when dragged (proportional layout kept x4 constant — broken).
+  const MAX_A = graphWidth * 0.25;
+  const MAX_D = graphWidth * 0.22;
+  const SUSTAIN_W = graphWidth * 0.18;
+  const MAX_R = graphWidth * 0.35; // MAX_A+MAX_D+SUSTAIN_W+MAX_R = graphWidth
 
   // Control point positions
-  const x0 = padding; // Start
-  const x1 = x0 + attackWidth; // Attack peak
-  const x2 = x1 + decayWidth; // Decay end (sustain start)
-  const x3 = x2 + sustainWidth; // Sustain end (release start)
-  const x4 = x3 + releaseWidth; // Release end
+  const x0 = padding;
+  const x1 = x0 + (attack / 127) * MAX_A;   // Attack peak — moves with attack
+  const x2 = x1 + (decay / 127) * MAX_D;    // Sustain start — moves with decay
+  const x3 = x2 + SUSTAIN_W;                // Sustain end
+  const x4 = x3 + (release / 127) * MAX_R;  // Release end — moves with release
 
   const y0 = height - padding; // Baseline
   const yPeak = padding; // Top (attack peak)
@@ -93,30 +88,25 @@ export function EnvelopeEditor({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
+      const maxA = graphWidth * 0.25;
+      const maxD = graphWidth * 0.22;
+      const maxR = graphWidth * 0.35;
+
       if (dragging === 'attack') {
-        // Attack: horizontal drag controls attack time (Ableton-style)
-        // Map horizontal delta to parameter change
         const deltaX = x - dragStart.x;
-        const deltaNorm = (deltaX / graphWidth) * 255; // Map to 0-255 range for sensitivity
-        const newAttack = Math.max(0, Math.min(127, Math.round(dragStart.value + deltaNorm)));
+        const newAttack = Math.max(0, Math.min(127, Math.round(dragStart.value + (deltaX / maxA) * 127)));
         onChange({ attack: newAttack, decay, sustain, release });
       } else if (dragging === 'decay') {
-        // Decay: horizontal drag controls decay time
         const deltaX = x - dragStart.x;
-        const deltaNorm = (deltaX / graphWidth) * 255;
-        const newDecay = Math.max(0, Math.min(127, Math.round(dragStart.value + deltaNorm)));
+        const newDecay = Math.max(0, Math.min(127, Math.round(dragStart.value + (deltaX / maxD) * 127)));
         onChange({ attack, decay: newDecay, sustain, release });
       } else if (dragging === 'sustain') {
-        // Sustain: vertical drag controls sustain level (Ableton-style)
-        const deltaY = dragStart.y - y; // Inverted: up = increase
-        const deltaNorm = (deltaY / graphHeight) * 127;
-        const newSustain = Math.max(0, Math.min(127, Math.round(dragStart.value + deltaNorm)));
+        const deltaY = dragStart.y - y; // up = increase
+        const newSustain = Math.max(0, Math.min(127, Math.round(dragStart.value + (deltaY / graphHeight) * 127)));
         onChange({ attack, decay, sustain: newSustain, release });
       } else if (dragging === 'release') {
-        // Release: horizontal drag controls release time
         const deltaX = x - dragStart.x;
-        const deltaNorm = (deltaX / graphWidth) * 255;
-        const newRelease = Math.max(0, Math.min(127, Math.round(dragStart.value + deltaNorm)));
+        const newRelease = Math.max(0, Math.min(127, Math.round(dragStart.value + (deltaX / maxR) * 127)));
         onChange({ attack, decay, sustain, release: newRelease });
       }
     },
@@ -202,7 +192,7 @@ export function EnvelopeEditor({
 
       {/* Sustain level indicator (vertical drag) */}
       <circle
-        cx={x2 + sustainWidth / 2}
+        cx={x2 + SUSTAIN_W / 2}
         cy={ySustain}
         r={5}
         fill="#1a1a1a"
@@ -231,7 +221,7 @@ export function EnvelopeEditor({
       <text x={x2} y={ySustain - 10} fill="#4a9eff" fontSize={11} textAnchor="middle" fontWeight="500">
         D
       </text>
-      <text x={x2 + sustainWidth / 2} y={ySustain - 10} fill="#4a9eff" fontSize={11} textAnchor="middle" fontWeight="500">
+      <text x={x2 + SUSTAIN_W / 2} y={ySustain - 10} fill="#4a9eff" fontSize={11} textAnchor="middle" fontWeight="500">
         S
       </text>
       <text x={x4} y={y0 + 15} fill="#4a9eff" fontSize={11} textAnchor="middle" fontWeight="500">

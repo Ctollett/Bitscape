@@ -944,6 +944,8 @@ pub fn set_lfo2_waveform(&mut self, w: u32) {
         let base_overdrive   = self.overdrive;
         let base_pan         = self.pan;
         let base_volume      = self.volume;
+        let base_filter_cutoff    = self.filter_l.cutoff();
+        let base_filter_resonance = self.filter_l.resonance();
 
         let mod1 = self.lfo1.process(dt);
         let mod2 = self.lfo2.process(dt);
@@ -1019,6 +1021,10 @@ pub fn set_lfo2_waveform(&mut self, w: u32) {
         self.overdrive   = base_overdrive;
         self.pan         = base_pan;
         self.volume      = base_volume;
+        self.filter_l.set_cutoff(base_filter_cutoff);
+        self.filter_r.set_cutoff(base_filter_cutoff);
+        self.filter_l.set_resonance(base_filter_resonance);
+        self.filter_r.set_resonance(base_filter_resonance);
 
         // Package into a Float32Array for JS
         let array = Float32Array::new_with_length((BLOCK * 2) as u32);

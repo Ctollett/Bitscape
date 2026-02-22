@@ -25,9 +25,23 @@ export type PatchAction =
   | { type: 'LOAD_PATCH'; patch: FMCanvasPatch }
   | { type: 'SET_MASTER_VOLUME'; value: number }
   | { type: 'SET_MASTER_PAN'; value: number }
+  | { type: 'SET_MASTER_OVERDRIVE'; value: number }
+  | { type: 'SET_OCTAVE'; value: number }
   | { type: 'SET_PORTAMENTO_TIME'; value: number }
   | { type: 'SET_PITCH_BEND_RANGE'; value: number }
-  | { type: 'SET_PITCH_BEND'; value: number };
+    | { type: 'SET_PITCH_BEND'; value: number }
+  | { type: 'SET_FILTER_TYPE'; value: number }
+  | { type: 'SET_FILTER_CUTOFF'; value: number }
+  | { type: 'SET_FILTER_RESONANCE'; value: number }
+  | { type: 'SET_FILTER_ENV'; attack: number; decay: number; sustain: number; release: number }
+  | { type: 'SET_FILTER_ENV_AMOUNT'; value: number }
+  | { type: 'SET_DELAY'; enabled: boolean; ms: number; feedback: number; mix: number }
+  | { type: 'SET_REVERB'; enabled: boolean; decay: number; damping: number; mix: number }
+  | { type: 'SET_CHORUS'; enabled: boolean; depth: number; speed: number; width: number; hpfCutoff: number; delayMs: number; reverbSend: number }
+  | { type: 'SET_LFO1'; speed: number; depth: number; waveform: number; mode: number; destination: number; multiplier: number; fade: number }
+  | { type: 'SET_LFO2'; speed: number; depth: number; waveform: number; mode: number; destination: number; multiplier: number; fade: number };
+
+ 
 
 
 // ─── Context ────────────────────────────────────────────────────────────────
