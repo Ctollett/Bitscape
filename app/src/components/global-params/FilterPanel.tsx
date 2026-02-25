@@ -1,5 +1,6 @@
 import { usePatch } from "../../fm-canvas/patch-context";
-import { EnvelopeEditor } from "./EnvelopeEditor";
+import { Knob } from "../Knob";
+import { VerticalSlider } from "../VerticalSlider";
 
 const FILTER_TYPES = [
   { value: 0, label: 'LP' },
@@ -15,7 +16,7 @@ export function FilterPanel() {
       height: '100%',
       display: 'flex',
       alignItems: 'center',
-      gap: '32px',
+      gap: '24px',
       padding: '12px 24px',
     }}>
 
@@ -45,65 +46,31 @@ export function FilterPanel() {
         </div>
       </div>
 
-      {/* Cutoff */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px' }}>Cutoff</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>{patch.filterCutoff}</span>
-        </div>
-        <input
-          type="range" min={0} max={127} step={1}
-          value={patch.filterCutoff}
-          onChange={e => dispatch({ type: 'SET_FILTER_CUTOFF', value: Number(e.target.value) })}
-          style={{ width: '100%', accentColor: '#4a9eff' }}
-        />
-      </div>
+      <VerticalSlider label="Cutoff" value={patch.filterCutoff} displayValue={patch.filterCutoff.toString()}
+        min={0} max={127}
+        onChange={(v) => dispatch({ type: 'SET_FILTER_CUTOFF', value: v })}
+      />
 
-      {/* Resonance */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px' }}>Resonance</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>{patch.filterResonance}</span>
-        </div>
-        <input
-          type="range" min={0} max={127} step={1}
-          value={patch.filterResonance}
-          onChange={e => dispatch({ type: 'SET_FILTER_RESONANCE', value: Number(e.target.value) })}
-          style={{ width: '100%', accentColor: '#4a9eff' }}
-        />
-      </div>
+      <VerticalSlider label="Resonance" value={patch.filterResonance} displayValue={patch.filterResonance.toString()}
+        min={0} max={127}
+        onChange={(v) => dispatch({ type: 'SET_FILTER_RESONANCE', value: v })}
+      />
 
-      {/* Env Amount */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px' }}>Env Amt</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>{patch.filterEnvAmount}</span>
-        </div>
-        <input
-          type="range" min={0} max={127} step={1}
-          value={patch.filterEnvAmount}
-          onChange={e => dispatch({ type: 'SET_FILTER_ENV_AMOUNT', value: Number(e.target.value) })}
-          style={{ width: '100%', accentColor: '#4a9eff' }}
-        />
-      </div>
+      <Knob label="Env Amt" value={patch.filterEnvAmount} displayValue={patch.filterEnvAmount.toString()}
+        min={0} max={127}
+        onChange={(v) => dispatch({ type: 'SET_FILTER_ENV_AMOUNT', value: v })}
+      />
 
-      {/* Filter Envelope */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px' }}>Filter Envelope</span>
-        <EnvelopeEditor
-          attack={patch.filterEnvAttack}
-          decay={patch.filterEnvDecay}
-          sustain={patch.filterEnvSustain}
-          release={patch.filterEnvRelease}
-          onChange={({ attack, decay, sustain, release }) =>
-            dispatch({ type: 'SET_FILTER_ENV', attack, decay, sustain, release })
-          }
-          width={220}
-          height={100}
-        />
-      </div>
+      <Knob label="Attack" value={patch.filterEnvAttack} displayValue={patch.filterEnvAttack.toString()}
+        min={0} max={127}
+        onChange={(v) => dispatch({ type: 'SET_FILTER_ENV', attack: v, decay: patch.filterEnvDecay, sustain: patch.filterEnvSustain, release: patch.filterEnvRelease })}
+      />
+
+      <Knob label="Decay" value={patch.filterEnvDecay} displayValue={patch.filterEnvDecay.toString()}
+        min={0} max={127}
+        onChange={(v) => dispatch({ type: 'SET_FILTER_ENV', attack: patch.filterEnvAttack, decay: v, sustain: patch.filterEnvSustain, release: patch.filterEnvRelease })}
+      />
 
     </div>
   );
 }
-

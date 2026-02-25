@@ -5,3 +5,4 @@ synth_engine/pkg/
 *.wasm.d.ts
 .DS_Store
 .claude/
+.mcp.json
