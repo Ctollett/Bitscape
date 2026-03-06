@@ -1,14 +1,21 @@
 import type { Point, FMCanvasPatch, WaveTypeId } from './types';
+import { colors } from '../tokens';
 
-export const CANVAS_SIZE = 1000;
+export const CANVAS_WIDTH  = 1200;
+export const CANVAS_HEIGHT = 586;
 export const NODE_RADIUS = 40;
 export const PANEL_WIDTH = 280;
 
 /** Inner zone fraction — inside this radius = drag to move, outside = drag to connect */
 export const INNER_ZONE_FRACTION = 0.7;
 
-export const OPERATOR_LABELS = ['C', 'A', 'B1', 'B2'] as const;
-export const OPERATOR_COLORS = ['#6699ff', '#ff9966', '#66cc99', '#cc66cc'] as const;
+export const OPERATOR_LABELS = ['OPERATOR 1', 'OPERATOR 2', 'OPERATOR 3', 'OPERATOR 4'] as const;
+export const OPERATOR_COLORS = [
+  colors.operator.carrier,
+  colors.operator.modA,
+  colors.operator.modB1,
+  colors.operator.modB2,
+] as const;
 
 export const WAVEFORM_NAMES = ['Sine', 'Square', 'Saw', 'Triangle', 'Noise'] as const;
 
@@ -20,10 +27,10 @@ export const RATIO_SNAPS: number[] = [
 
 /** Default diamond layout positions */
 export const DEFAULT_POSITIONS: [Point, Point, Point, Point] = [
-  { x: 500, y: 700 },  // Op 0 (C)  — bottom center
-  { x: 500, y: 300 },  // Op 1 (A)  — top center
-  { x: 300, y: 500 },  // Op 2 (B1) — left center
-  { x: 700, y: 500 },  // Op 3 (B2) — right center
+  { x: 600, y: 430 },  // Op 0 (C)  — bottom center
+  { x: 600, y: 150 },  // Op 1 (A)  — top center
+  { x: 400, y: 290 },  // Op 2 (B1) — left center
+  { x: 800, y: 290 },  // Op 3 (B2) — right center
 ];
 
 /** Self-loop radius range in pixels */

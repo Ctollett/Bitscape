@@ -3,7 +3,8 @@ import { useRef, useCallback} from 'react';
 import {
   NODE_RADIUS,
   OPERATOR_COLORS,
-  CANVAS_SIZE,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
 } from './constants';
 
 const WAVE_W = 50;
@@ -103,7 +104,7 @@ export function OperatorNode({
     if(!canvas) return
     const pointerX  = e.clientX - canvas.left;
     const pointerY = e.clientY - canvas.top;
-    const newPos = { x: Math.max(NODE_RADIUS, Math.min(CANVAS_SIZE - NODE_RADIUS, pointerX - dragStartRef.current.x)), y: Math.max(NODE_RADIUS, Math.min(CANVAS_SIZE - NODE_RADIUS, pointerY - dragStartRef.current.y) )}
+    const newPos = { x: Math.max(NODE_RADIUS, Math.min(CANVAS_WIDTH - NODE_RADIUS, pointerX - dragStartRef.current.x)), y: Math.max(NODE_RADIUS, Math.min(CANVAS_HEIGHT - NODE_RADIUS, pointerY - dragStartRef.current.y) )}
     pendingPos.current = newPos;
     if (!rafRef.current) {
   rafRef.current = requestAnimationFrame(flushPosition)

@@ -5,7 +5,8 @@ import { PatchProvider } from './fm-canvas/PatchProvider';
 import { FMCanvas } from './fm-canvas/FMCanvas';
 import './App.css';
 import { GlobalControlPanel } from './fm-canvas/GlobalControlPanel';
-import { PatchBrowser } from './components/PatchBrowser';
+import { colors, borderRadius, spacing } from './tokens';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from './fm-canvas/constants';
 
 function App() {
   const [started, setStarted] = useState(false);
@@ -31,12 +32,15 @@ function App() {
         </button>
       ) : (
         <PatchProvider>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-              <PatchBrowser />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, padding: spacing.md, width: '100%', boxSizing: 'border-box' }}>
+            {/* Canvas zone */}
+            <div style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, borderRadius: `${borderRadius.lg}px ${borderRadius.lg}px 0 0`, background: colors.bg.canvas, overflow: 'hidden' }}>
               <FMCanvas />
             </div>
-            <GlobalControlPanel />
+            {/* Bottom panel */}
+            <div style={{ borderRadius: `0 0 ${borderRadius.lg}px ${borderRadius.lg}px`, background: colors.bg.panel, overflow: 'hidden' }}>
+              <GlobalControlPanel />
+            </div>
             <Keyboard />
           </div>
         </PatchProvider>

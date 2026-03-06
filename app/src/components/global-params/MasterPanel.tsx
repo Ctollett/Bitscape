@@ -1,5 +1,7 @@
 import { usePatch } from '../../fm-canvas/patch-context';
-import { Knob } from '../Knob';
+import { PanelKnob } from '../PanelKnob';
+
+import { spacing } from '../../tokens';
 
 
 export function MasterPanel() {
@@ -8,40 +10,48 @@ export function MasterPanel() {
   return (
     <div style={{
       width: '100%', height: '100%',
-      display: 'flex', alignItems: 'center',
-      gap: '24px', padding: '12px 24px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',flexDirection: 'column',
+      gap: spacing.md,
     }}>
 
-      <Knob label="Volume" value={patch.masterVolume} displayValue={patch.masterVolume.toString()}
-        min={0} max={127}
-        onChange={(v) => dispatch({ type: 'SET_MASTER_VOLUME', value: v })}
+    <div style={{display: 'flex', flexDirection: 'row', gap: '24px'}}>
+      <PanelKnob
+        value={patch.masterVolume / 127}
+        onChange={(v) => dispatch({ type: 'SET_MASTER_VOLUME', value: v * 127 })}
+        label="Vol"
       />
 
-      <Knob label="Pan" value={patch.masterPan} displayValue={patch.masterPan === 64 ? 'C' : patch.masterPan < 64 ? `L${64 - patch.masterPan}` : `R${patch.masterPan - 64}`}
-        min={0} max={127}
-        onChange={(v) => dispatch({ type: 'SET_MASTER_PAN', value: v })}
+      <PanelKnob
+        value={patch.masterPan / 127}
+        onChange={(v) => dispatch({ type: 'SET_MASTER_PAN', value: v * 127 })}
+        label="Pan"
       />
 
-      <Knob label="Overdrive" value={patch.masterOverdrive} displayValue={`${Math.round(patch.masterOverdrive * 100)}%`}
-        min={0} max={1}
+      <PanelKnob
+        value={patch.masterOverdrive}
         onChange={(v) => dispatch({ type: 'SET_MASTER_OVERDRIVE', value: v })}
+        label="Drive"
+      />
+      </div>
+ <div style={{display: 'flex', flexDirection: 'row', gap: '24px'}}>
+      <PanelKnob
+        value={patch.masterVolume / 127}
+        onChange={(v) => dispatch({ type: 'SET_MASTER_VOLUME', value: v * 127 })}
+        label="Vol"
       />
 
-      <Knob label="Octave" value={patch.octave} displayValue={patch.octave === 0 ? '0' : patch.octave > 0 ? `+${patch.octave}` : `${patch.octave}`}
-        min={-2} max={2}
-        onChange={(v) => dispatch({ type: 'SET_OCTAVE', value: v })}
+      <PanelKnob
+        value={patch.portamentoTime / 127}
+        onChange={(v) => dispatch({ type: 'SET_PORTAMENTO_TIME', value: v * 127 })}
+        label="Porta"
       />
 
-      <Knob label="Portamento" value={patch.portamentoTime} displayValue={patch.portamentoTime.toString()}
-        min={0} max={127}
-        onChange={(v) => dispatch({ type: 'SET_PORTAMENTO_TIME', value: v })}
+      <PanelKnob
+        value={patch.pitchBendRange / 24}
+        onChange={(v) => dispatch({ type: 'SET_PITCH_BEND_RANGE', value: v * 24 })}
+        label="PB"
       />
-
-      <Knob label="PB Range" value={patch.pitchBendRange} displayValue={`${patch.pitchBendRange} st`}
-        min={0} max={24}
-        onChange={(v) => dispatch({ type: 'SET_PITCH_BEND_RANGE', value: v })}
-      />
-
+</div>
     </div>
   );
 }
