@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { WaveTypeId } from './types';
-import { spacing } from '../tokens'
+import { spacing, typography } from '../tokens'
 
 import SineIcon from '../component-images/sine.svg?react'
 import SawIcon from '../component-images/saw.svg?react'
@@ -12,14 +12,15 @@ export interface OptionMenuProps<T extends string | number> {
   value: T;
   onChange: (value: T) => void;
   color?: string;
+  gap?: number;
 }
 
-export function OptionMenu<T extends string | number>({ options, value, onChange, color }: OptionMenuProps<T>) {
+export function OptionMenu<T extends string | number>({ options, value, onChange, color, gap = spacing.sm }: OptionMenuProps<T>) {
   const [hovered, setHovered] = useState<T | null>(null)
 
   return (
     <div>
-      <ul style={{ display: 'flex', listStyle: 'none', gap: spacing.sm }}>
+      <ul style={{ display: 'flex', listStyle: 'none', gap, margin: 0, padding: 0 }}>
         {options.map((option) => {
           const isActive = option.id === value
           const isHovered = option.id === hovered
@@ -29,7 +30,7 @@ export function OptionMenu<T extends string | number>({ options, value, onChange
               <button
                 onMouseEnter={() => setHovered(option.id)}
                 onMouseLeave={() => setHovered(null)}
-                style={{ color: isActive ? color : isHovered ? '#aaa' : '#555', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+                style={{ ...typography.label.lg, lineHeight: 1, display: 'block', color: isActive ? color : isHovered ? '#aaa' : '#555', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: 0, margin: 0 }}
                 onClick={() => onChange(option.id)}
               >
                 {option.label}

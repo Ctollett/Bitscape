@@ -7,7 +7,8 @@ pub struct Delay {
     buffer_r: VecDeque<f32>,
     write_pos: usize,
     max_delay_samples: usize,
-    delay_time_ms: f32,
+    delay_time_ms: f32,        // target delay time set by user
+    current_delay_ms: f32,     // smoothed delay time used for reading
     feedback: f32,
     mix: f32,
 }
@@ -23,8 +24,9 @@ impl Delay {
             write_pos: 0,
             max_delay_samples,
             delay_time_ms: 500.0,
+            current_delay_ms: 500.0,
             feedback: 0.5,
-            mix: 0.5,
+            mix: 0.0,
         }
     }
 
@@ -55,22 +57,35 @@ impl Delay {
     }
 
     pub fn process(&mut self, input_l: f32, input_r: f32, _dt: f32) -> (f32, f32) {
-        // calculate read position
-        let delay_samples = (self.delay_time_ms * self.sample_rate / 1000.0) as usize;
-        let read_pos = (self.write_pos + self.max_delay_samples - delay_samples) % self.max_delay_samples;
+        // Rate-limit delay time changes to at most 0.5 samples worth per audio sample.
+        // Exponential smoothing causes burst pitch artifacts for large jumps (e.g. 10→1000ms).
+        // A hard rate cap ensures the read head never moves faster than ~1.5x, giving a
+        // smooth pitch glide (like tape being sped/slowed) with no discontinuities.
+        let max_per_step = 0.5 * 1000.0 / self.sample_rate;
+        let diff = self.delay_time_ms - self.current_delay_ms;
+        self.current_delay_ms += diff.clamp(-max_per_step, max_per_step);
 
-        let delayed_l = self.buffer_l[read_pos];
-        let delayed_r = self.buffer_r[read_pos];
+        // Fractional delay: interpolate between two adjacent samples to eliminate
+        // the 1-sample integer jump that causes clicks even with time smoothing
+        let delay_f = (self.current_delay_ms * self.sample_rate / 1000.0).max(1.0);
+        let delay_int = delay_f.floor() as usize;
+        let frac = delay_f - delay_int as f32;
 
-        // Mix dry/wet output
-        let out_l = input_l * (1.0 - self.mix) + delayed_l * self.mix;
-        let out_r = input_r * (1.0 - self.mix) + delayed_r * self.mix;
+        let pos0 = (self.write_pos + self.max_delay_samples - delay_int) % self.max_delay_samples;
+        let pos1 = (self.write_pos + self.max_delay_samples - delay_int - 1) % self.max_delay_samples;
 
-        // Write input + attenuated feedback into buffer (prevents amplitude growth)
+        // Standard stereo delay: read delayed sample for each channel
+        let delayed_l = self.buffer_l[pos0] * (1.0 - frac) + self.buffer_l[pos1] * frac;
+        let delayed_r = self.buffer_r[pos0] * (1.0 - frac) + self.buffer_r[pos1] * frac;
+
+        // Each channel feeds back into itself
         self.buffer_l[self.write_pos] = (input_l + delayed_l * self.feedback).clamp(-4.0, 4.0);
         self.buffer_r[self.write_pos] = (input_r + delayed_r * self.feedback).clamp(-4.0, 4.0);
 
-        // increment write head
+        // Dry stays at full level, wet echoes add on top
+        let out_l = input_l + delayed_l * self.mix;
+        let out_r = input_r + delayed_r * self.mix;
+
         self.write_pos = (self.write_pos + 1) % self.max_delay_samples;
 
         (out_l, out_r)

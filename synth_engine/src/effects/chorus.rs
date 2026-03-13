@@ -29,18 +29,18 @@ impl Chorus {
         let max_delay_samples = (sample_rate * 0.2) as usize;
         Self {
             sample_rate,
-            depth: 0.5,
+            depth: 0.0,
             speed: 1.0,
             hpf: {
                 let mut f = Filter::new(sample_rate);
                 f.set_type(FilterType::HighPass);
-                // default HPF cutoff ~ 200 Hz
-                f.set_cutoff(200.0);
+                // default HPF cutoff ~ 20 Hz (transparent by default)
+                f.set_cutoff(20.0);
                 f.set_resonance(0.707);
                 f
             },
             width: 0.5,
-            delay_ms: 30.0,
+            delay_ms: 7.0,
             reverb_send: 0.0,
             lfo_phase: 0.0,
             buffer: vec![0.0; max_delay_samples],
@@ -110,9 +110,10 @@ impl Chorus {
         let wet1 = self.hpf.process(wet1, dt);
         let wet2 = self.hpf.process(wet2, dt);
 
-        // mix dry/wet
-        let mixed_l = input_l * (1.0 - self.depth) + wet1 * self.depth;
-        let mixed_r = input_r * (1.0 - self.depth) + wet2 * self.depth;
+        // Additive mix — dry stays at full level, wet adds on top.
+        // Avoids volume dips from phase cancellation in a crossfade approach.
+        let mixed_l = input_l + wet1 * self.depth * 0.5;
+        let mixed_r = input_r + wet2 * self.depth * 0.5;
 
         // stereo width: scale difference from center
         let center_l = 0.5 * (mixed_l + mixed_r);

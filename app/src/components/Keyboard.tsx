@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { noteOn, noteOff } from '../audio/engine';
-import { colors, primitive } from '../tokens';
+import { borderRadius, colors, primitive } from '../tokens';
 
 function midiToFreq(note: number): number {
   return 440 * Math.pow(2, (note - 69) / 12);
@@ -135,7 +135,7 @@ export default function Keyboard() {
       marginTop: 12,
       padding: PAD,
       background: colors.bg.panel,
-      borderRadius: 12,
+      borderRadius: borderRadius.lg,
       userSelect: 'none',
       display: 'inline-block',
     }}>

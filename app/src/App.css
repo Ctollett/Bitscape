@@ -1,3 +1,12 @@
+@font-face {
+  font-family: 'PP Fraktion Mono';
+  src: url('../src//assets/fonts/PPFraktionMono-Bold.otf') format('opentype');
+  font-weight: 700;
+}
+
+
+
+
 .app {
   display: flex;
   flex-direction: column;

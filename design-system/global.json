@@ -1,0 +1,369 @@
+{
+  "primitive": {
+    "neutral": {
+      "white": {
+        "value": "#F7F5F0",
+        "type": "color",
+        "description": "Warm off-white, publication paper"
+      },
+      "gray-50": {
+        "value": "#EFEFEB",
+        "type": "color",
+        "description": "Lightest surface, Braun panel"
+      },
+      "gray-100": {
+        "value": "#E2E0DA",
+        "type": "color",
+        "description": "Panel alt, subtle divider"
+      },
+      "gray-200": {
+        "value": "#C8C5BC",
+        "type": "color",
+        "description": "Muted surface"
+      },
+      "gray-300": {
+        "value": "#A8A49A",
+        "type": "color",
+        "description": "Secondary text, dimmed"
+      },
+      "gray-400": {
+        "value": "#7A766C",
+        "type": "color",
+        "description": "Muted text"
+      },
+      "gray-500": {
+        "value": "#504D46",
+        "type": "color",
+        "description": "Strong secondary"
+      },
+      "gray-600": {
+        "value": "#353330",
+        "type": "color",
+        "description": "Near-black surface"
+      },
+      "gray-700": {
+        "value": "#232220",
+        "type": "color",
+        "description": "Panel dark"
+      },
+      "gray-800": {
+        "value": "#161514",
+        "type": "color",
+        "description": "Deep surface"
+      },
+      "gray-900": {
+        "value": "#0E0D0C",
+        "type": "color",
+        "description": "Near black"
+      },
+      "black": {
+        "value": "#0A0908",
+        "type": "color",
+        "description": "Vinyl black"
+      }
+    },
+    "red": {
+      "50": {
+        "value": "#FAEDE9",
+        "type": "color"
+      },
+      "100": {
+        "value": "#F5D0C8",
+        "type": "color"
+      },
+      "200": {
+        "value": "#EBA898",
+        "type": "color"
+      },
+      "400": {
+        "value": "#E8735A",
+        "type": "color"
+      },
+      "500": {
+        "value": "#D94F2B",
+        "type": "color",
+        "description": "Primary — SHIFT5 red, Braun accent, Factory Records"
+      },
+      "600": {
+        "value": "#B83F22",
+        "type": "color"
+      },
+      "700": {
+        "value": "#8C2F18",
+        "type": "color"
+      },
+      "800": {
+        "value": "#5E1F10",
+        "type": "color"
+      }
+    },
+    "blue": {
+      "50": {
+        "value": "#E8EEF9",
+        "type": "color"
+      },
+      "100": {
+        "value": "#C8D5F5",
+        "type": "color"
+      },
+      "200": {
+        "value": "#95AEEE",
+        "type": "color"
+      },
+      "400": {
+        "value": "#5A82E8",
+        "type": "color"
+      },
+      "500": {
+        "value": "#2B5FD9",
+        "type": "color",
+        "description": "Swiss primary blue, New Order, carrier operator"
+      },
+      "600": {
+        "value": "#1F4AB0",
+        "type": "color"
+      },
+      "700": {
+        "value": "#153680",
+        "type": "color"
+      },
+      "800": {
+        "value": "#0C2254",
+        "type": "color"
+      }
+    },
+    "teal": {
+      "50": {
+        "value": "#E5F4F2",
+        "type": "color"
+      },
+      "100": {
+        "value": "#C0E6E1",
+        "type": "color"
+      },
+      "200": {
+        "value": "#88CAC2",
+        "type": "color"
+      },
+      "400": {
+        "value": "#65B8AC",
+        "type": "color"
+      },
+      "500": {
+        "value": "#3B9E8E",
+        "type": "color",
+        "description": "Music/Media teal, vinyl label, modulator B1"
+      },
+      "600": {
+        "value": "#2C7A6E",
+        "type": "color"
+      },
+      "700": {
+        "value": "#1E564E",
+        "type": "color"
+      },
+      "800": {
+        "value": "#103530",
+        "type": "color"
+      }
+    },
+    "yellow": {
+      "50": {
+        "value": "#FDF8E0",
+        "type": "color"
+      },
+      "100": {
+        "value": "#FAF0B0",
+        "type": "color"
+      },
+      "200": {
+        "value": "#F5E070",
+        "type": "color"
+      },
+      "400": {
+        "value": "#F0D258",
+        "type": "color"
+      },
+      "500": {
+        "value": "#E8C840",
+        "type": "color",
+        "description": "Publication yellow, YMO warmth, modulator B2"
+      },
+      "600": {
+        "value": "#C8A800",
+        "type": "color"
+      },
+      "700": {
+        "value": "#8A7000",
+        "type": "color"
+      },
+      "800": {
+        "value": "#544400",
+        "type": "color"
+      }
+    },
+    "magenta": {
+      "400": {
+        "value": "#CC77AA",
+        "type": "color"
+      },
+      "500": {
+        "value": "#B84A8E",
+        "type": "color",
+        "description": "Memphis accent, reserved"
+      }
+    }
+  },
+  "knob": {
+    "sm": {
+      "value": "28",
+      "type": "sizing"
+    },
+    "md": {
+      "value": "48",
+      "type": "sizing"
+    },
+    "lg": {
+      "value": "112",
+      "type": "sizing"
+    }
+  },
+  "slider": {
+    "width": {
+      "value": "4",
+      "type": "sizing"
+    },
+    "panel": {
+      "height": {
+        "value": "104",
+        "type": "sizing"
+      }
+    },
+    "canvas": {
+      "height": {
+        "value": "140",
+        "type": "sizing"
+      },
+      "handle": {
+        "value": "12",
+        "type": "sizing"
+      }
+    }
+  },
+  "operator": {
+    "value": "120",
+    "type": "sizing"
+  },
+  "spacing": {
+    "xs": {
+      "value": "4",
+      "type": "spacing"
+    },
+    "sm": {
+      "value": "8",
+      "type": "spacing"
+    },
+    "md": {
+      "value": "16",
+      "type": "spacing"
+    },
+    "lg": {
+      "value": "24",
+      "type": "spacing"
+    },
+    "xl": {
+      "value": "32",
+      "type": "spacing"
+    },
+    "2xl": {
+      "value": "48",
+      "type": "spacing"
+    },
+    "3xl": {
+      "value": "64",
+      "type": "spacing"
+    }
+  },
+  "borderWidth": {
+    "thin": {
+      "value": "1",
+      "type": "borderWidth"
+    },
+    "default": {
+      "value": "2",
+      "type": "borderWidth"
+    },
+    "thick": {
+      "value": "3",
+      "type": "borderWidth"
+    },
+    "control": {
+      "value": "1.5",
+      "type": "borderWidth"
+    }
+  },
+  "radius": {
+    "sm": {
+      "value": "4",
+      "type": "borderRadius"
+    },
+    "md": {
+      "value": "8",
+      "type": "borderRadius"
+    },
+    "lg": {
+      "value": "16",
+      "type": "borderRadius"
+    },
+    "full": {
+      "value": "9999",
+      "type": "borderRadius"
+    }
+  },
+  "type": {
+    "label": {
+      "sm": {
+        "value": {
+          "fontFamily": "PP Fraktion Mono",
+          "fontWeight": "Bold",
+          "fontSize": "8",
+          "letterSpacing": "2",
+          "textCase": "uppercase"
+        },
+        "type": "typography"
+      },
+      "lg": {
+        "value": {
+          "fontFamily": "PP Fraktion Mono",
+          "fontWeight": "Bold",
+          "fontSize": "12",
+          "letterSpacing": "2",
+          "textCase": "uppercase"
+        },
+        "type": "typography"
+      }
+    },
+    "title": {
+      "lg": {
+        "value": {
+          "fontFamily": "PP Mori",
+          "fontWeight": "Semibold",
+          "fontSize": "120",
+          "letterSpacing": "2",
+          "textCase": "uppercase"
+        },
+        "type": "typography"
+      },
+      "sm": {
+        "value": {
+          "fontFamily": "PP Mori",
+          "fontWeight": "Semibold",
+          "fontSize": "24",
+          "letterSpacing": "2",
+          "textCase": "uppercase"
+        },
+        "type": "typography"
+      }
+    }
+  }
+}

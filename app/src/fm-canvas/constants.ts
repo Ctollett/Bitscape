@@ -2,7 +2,7 @@ import type { Point, FMCanvasPatch, WaveTypeId } from './types';
 import { colors } from '../tokens';
 
 export const CANVAS_WIDTH  = 1200;
-export const CANVAS_HEIGHT = 586;
+export const CANVAS_HEIGHT = 714;
 export const NODE_RADIUS = 40;
 export const PANEL_WIDTH = 280;
 

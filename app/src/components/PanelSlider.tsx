@@ -4,6 +4,10 @@ import { borderRadius } from '../tokens';
 
 import { colors } from '../tokens';
 
+import { typography } from '../tokens';
+
+import { spacing } from '../tokens';
+
 interface PanelSliderProps {
   value: number;
   onChange: (value: number) => void;
@@ -37,11 +41,11 @@ const onPointerUp = () => {
 }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', userSelect: 'none', WebkitUserSelect: 'none'}}>
-      <div onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}style={{cursor: 'pointer', position: 'relative', height: '128px', width: '8px', borderRadius: borderRadius.md, backgroundColor: colors.bg.app  }} ref={trackRef}>
-        <div style={{position: 'absolute', backgroundColor: colors.bg.canvas, height: `${value * 128}px`, width: '8px', bottom: 0, borderRadius: borderRadius.md,  }} />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', userSelect: 'none', WebkitUserSelect: 'none', gap: spacing.sm }}>
+      <div onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}style={{cursor: 'pointer', position: 'relative', height: '160px', width: '16px', borderRadius: borderRadius.md, backgroundColor: colors.bg.app  }} ref={trackRef}>
+        <div style={{position: 'absolute', backgroundColor: colors.bg.canvas, height: `${value * 160}px`, width: '16px', bottom: 0, borderRadius: borderRadius.md,  }} />
       </div>
-      <span style={{color: 'black', userSelect: 'none', WebkitUserSelect: 'none'}}>
+      <span style={{color: 'black', userSelect: 'none', WebkitUserSelect: 'none', ...typography.label.sm}}>
         {showValue ? Math.round(value * 100) : label}
       </span>
     </div>

@@ -1,0 +1,133 @@
+{
+  "bg": {
+    "app": {
+      "value": "#d8d3ca",
+      "type": "color",
+      "description": "Root application background"
+    },
+    "canvas": {
+      "value": "#1f1e1c",
+      "type": "color",
+      "description": "FM algorithm canvas"
+    },
+    "panel": {
+      "value": "#e8e3d9",
+      "type": "color"
+    }
+  },
+  "border": {
+    "default": {
+      "value": "{primitive.neutral.gray-100}",
+      "type": "color",
+      "description": "Standard panel borders"
+    },
+    "subtle": {
+      "value": "{primitive.neutral.gray-50}",
+      "type": "color",
+      "description": "Hairline dividers"
+    },
+    "strong": {
+      "value": "{primitive.neutral.gray-200}",
+      "type": "color",
+      "description": "Emphasized borders"
+    },
+    "canvas": {
+      "value": "#D8D5CC",
+      "type": "color",
+      "description": "Canvas boundary"
+    }
+  },
+  "text": {
+    "primary": {
+      "value": "{primitive.neutral.gray-800}",
+      "type": "color",
+      "description": "Main labels, headings"
+    },
+    "secondary": {
+      "value": "{primitive.neutral.gray-500}",
+      "type": "color",
+      "description": "Secondary labels"
+    },
+    "muted": {
+      "value": "{primitive.neutral.gray-400}",
+      "type": "color",
+      "description": "Dimmed / helper text"
+    },
+    "dim": {
+      "value": "{primitive.neutral.gray-300}",
+      "type": "color",
+      "description": "Placeholder, very dimmed"
+    },
+    "inverse": {
+      "value": "{primitive.neutral.white}",
+      "type": "color",
+      "description": "Text on dark surfaces"
+    }
+  },
+  "control": {
+    "track": {
+      "value": "{primitive.neutral.gray-100}",
+      "type": "color",
+      "description": "Knob/slider inactive track"
+    },
+    "handle": {
+      "value": "{primitive.neutral.white}",
+      "type": "color",
+      "description": "Slider / drag handle"
+    },
+    "indicator": {
+      "value": "{primitive.neutral.gray-400}",
+      "type": "color",
+      "description": "Knob position line"
+    }
+  },
+  "operator": {
+    "carrier": {
+      "value": "{primitive.blue.500}",
+      "type": "color",
+      "description": "Carrier operator node"
+    },
+    "mod-a": {
+      "value": "{primitive.red.500}",
+      "type": "color",
+      "description": "Modulator A node"
+    },
+    "mod-b1": {
+      "value": "{primitive.teal.500}",
+      "type": "color",
+      "description": "Modulator B1 node"
+    },
+    "mod-b2": {
+      "value": "{primitive.yellow.500}",
+      "type": "color",
+      "description": "Modulator B2 node"
+    },
+    "inactive": {
+      "value": "{primitive.neutral.gray-300}",
+      "type": "color",
+      "description": "Inactive operator"
+    },
+    "bg": {
+      "value": "{primitive.neutral.gray-50}",
+      "type": "color",
+      "description": "Operator node background"
+    }
+  },
+  "state": {
+    "hover": {
+      "value": "rgba(10, 9, 8, 0.05)",
+      "type": "color",
+      "description": "Hover overlay"
+    },
+    "active": {
+      "value": "rgba(217, 79, 43, 0.12)",
+      "type": "color",
+      "description": "Active / pressed"
+    },
+    "focus": {
+      "value": "{primitive.blue.500}",
+      "type": "color",
+      "description": "Focus ring"
+    }
+  }
+}

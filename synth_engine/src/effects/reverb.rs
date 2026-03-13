@@ -53,11 +53,11 @@ impl Reverb {
         Self {
             comb_buffers_l, comb_pos_l,
             comb_buffers_r, comb_pos_r,
-            comb_feedback: 0.84,
+            comb_feedback: 0.75,
             ap_buffers_l, ap_pos_l,
             ap_buffers_r, ap_pos_r,
             ap_feedback: 0.5,
-            mix: 0.3,
+            mix: 0.0,
         }
     }
 

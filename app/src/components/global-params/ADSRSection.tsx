@@ -2,6 +2,8 @@ import { PanelKnob } from '../PanelKnob';
 import { PanelSlider } from '../PanelSlider';
 import { usePatch } from '../../fm-canvas/patch-context';
 
+import { spacing, typography, colors } from '../../tokens'
+
 
 export function ADSRSection() {
 
@@ -21,11 +23,14 @@ export function ADSRSection() {
 
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24, height: '100%', width: '100%', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', paddingTop: 24, paddingBottom: 24, justifyContent: 'space-between', boxSizing: 'border-box' }}>
+        <span style={{ ...typography.label.lg, lineHeight: 1, color: colors.text.muted, paddingLeft: 24 }}>ADSR</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xl, paddingLeft: 48, paddingRight: 48, boxSizing: 'border-box', justifyContent: 'center' }}>
       <PanelSlider value={patch.ampAttack / 127} onChange={(v) => setEnv({ attack: v * 127 })} label="A" />
       <PanelSlider value={patch.ampDecay / 127} onChange={(v) => setEnv({ decay: v * 127 })} label="D" />
       <PanelSlider value={patch.ampSustain / 127} onChange={(v) => setEnv({ sustain: v * 127 })} label="S" />
       <PanelSlider value={patch.ampRelease / 127} onChange={(v) => setEnv({ release: v * 127 })} label="R" />
+    </div>
     </div>
   );
 }
