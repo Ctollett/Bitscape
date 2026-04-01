@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react';
 
-import { colors, borderWidth } from '../tokens'
+import { colors, typography, spacing } from '../tokens'
 
-const SIZE = 28;
-const RADIUS = 11;
+const SIZE = 40;
+const RADIUS = 16;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const MAX_ARC = (270 / 360) * CIRCUMFERENCE
+const SWEEP = 270;
+const MAX_ARC = (SWEEP / 360) * CIRCUMFERENCE;
+const START_DEG = 135; // 7 o'clock position from SVG 3 o'clock
 
 interface PanelKnobProps {
   value: number;
@@ -40,19 +42,35 @@ export function PanelKnob({ value, onChange, label }: PanelKnobProps) {
     setShowValue(false);
   }
 
+  // Indicator line at the tip of the value arc
+  const indicatorAngleRad = (START_DEG + value * SWEEP) * (Math.PI / 180);
+  const x1 = CENTER + RADIUS * Math.cos(indicatorAngleRad);
+  const y1 = CENTER + RADIUS * Math.sin(indicatorAngleRad);
+  const x2 = CENTER + 3 * Math.cos(indicatorAngleRad);
+  const y2 = CENTER + 3 * Math.sin(indicatorAngleRad);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', userSelect: 'none', WebkitUserSelect: 'none'}}>
-      <svg width={SIZE} height={SIZE}>
-        <circle style={{cursor: 'pointer'}} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
- strokeWidth={borderWidth.heavy} fill='none' stroke={colors.bg.app} cx={CENTER} cy={CENTER} r={RADIUS} />
-        <circle style={{pointerEvents: 'none'}}
-strokeDasharray={`${value * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-transform={`rotate(90, ${CENTER}, ${CENTER})`}
- strokeWidth={borderWidth.heavy}  strokeLinecap="round" fill="none" stroke={colors.bg.canvas} cx={CENTER} cy={CENTER} r={RADIUS} />
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', userSelect: 'none', WebkitUserSelect: 'none', gap: spacing.sm }}>
+      <svg width={SIZE} height={SIZE} style={{ cursor: 'ns-resize' }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
+        {/* Track ring */}
+        <circle
+          strokeWidth={2} fill='none' stroke={colors.control.indicator}
+          cx={CENTER} cy={CENTER} r={RADIUS}
+        />
+        {/* Value arc */}
+        <circle style={{ pointerEvents: 'none' }}
+          strokeDasharray={`${value * MAX_ARC} ${CIRCUMFERENCE}`}
+          transform={`rotate(${START_DEG}, ${CENTER}, ${CENTER})`}
+          strokeWidth={2} strokeLinecap="round" fill="none" stroke={colors.bg.canvas}
+          cx={CENTER} cy={CENTER} r={RADIUS}
+        />
+        {/* Indicator line */}
+        <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors.bg.canvas} strokeWidth={2} strokeLinecap="round" />
       </svg>
-      <span style={{color: 'black', userSelect: 'none', WebkitUserSelect: 'none'}}>
-        {showValue ? Math.round(value * 100) : label}
-      </span>
+      <div style={{ display: 'grid' }}>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: 'black', userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: 'black', userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0 }}>{Math.round(value * 100)}</span>
+      </div>
     </div>
   );
 }

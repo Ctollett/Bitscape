@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react';
 import { usePatch } from './patch-context';
 import { OPERATOR_LABELS, OPERATOR_COLORS, RATIO_SNAPS } from './constants';
-import { Knob } from '../components/Knob';
+import { PanelKnob } from '../components/PanelKnob';
 import { SteppedKnob } from '../components/SteppedKnob';
-import { VerticalSlider } from '../components/VerticalSlider';
+import { PanelSlider } from '../components/PanelSlider';
 import { spacing } from '../tokens'
 import { WaveMenu } from './WaveMenu';
 
@@ -74,10 +74,10 @@ onChange={(w) => dispatch({ type: 'SET_WAVEFORM', opIndex, waveform: w })} color
             color={OPERATOR_COLORS[opIndex]}
           />
         </div>
-        <VerticalSlider label="Level" value={level} displayValue={level.toString()}
-          min={0} max={127}
-          onChange={(v) => dispatch({ type: 'SET_OPERATOR_LEVEL', opIndex, value: v })}
-          color={OPERATOR_COLORS[opIndex]}
+        <PanelSlider
+          label="Level"
+          value={level / 127}
+          onChange={(v) => dispatch({ type: 'SET_OPERATOR_LEVEL', opIndex, value: Math.round(v * 127) })}
         />
       </div>
 
@@ -85,54 +85,39 @@ onChange={(w) => dispatch({ type: 'SET_WAVEFORM', opIndex, waveform: w })} color
       {/* Row 3 — Output: Level + Feedback */}
       <div style={{display: 'flex', gap: spacing.md, flexDirection: 'column'}}>
       <div style={KNOB_ROW}>
-        <Knob
-          value={feedback}
-          min={0} max={127}
-          onChange={(v) => dispatch({ type: 'SET_OPERATOR_FEEDBACK', opIndex, value: v })}
+        <PanelKnob
+          value={feedback / 127}
+          onChange={(v) => dispatch({ type: 'SET_OPERATOR_FEEDBACK', opIndex, value: Math.round(v * 127) })}
           label="Fdbk"
-          color={OPERATOR_COLORS[opIndex]}
         />
-        <Knob
-          value={detune}
-          min={-100} max={100}
-          onChange={(v) => dispatch({ type: 'SET_OPERATOR_DETUNE', opIndex, value: v })}
+        <PanelKnob
+          value={(detune + 100) / 200}
+          onChange={(v) => dispatch({ type: 'SET_OPERATOR_DETUNE', opIndex, value: Math.round(v * 200 - 100) })}
           label="Detune"
-          displayValue={`${detune > 0 ? '+' : ''}${detune}¢`}
-          color={OPERATOR_COLORS[opIndex]}
         />
-        <Knob
-          value={harm}
-          min={-26} max={26}
-          onChange={(v) => dispatch({ type: 'SET_OPERATOR_HARM', opIndex, value: v })}
+        <PanelKnob
+          value={(harm + 26) / 52}
+          onChange={(v) => dispatch({ type: 'SET_OPERATOR_HARM', opIndex, value: Math.round(v * 52 - 26) })}
           label="Harm"
-          displayValue={`${harm > 0 ? '+' : ''}${harm}`}
-          color={OPERATOR_COLORS[opIndex]}
         />
       </div>
 
-
       {/* Row 4 — Mod Env: Attack + Decay + End */}
       <div style={KNOB_ROW}>
-        <Knob
-          value={env.attack}
-          min={0} max={127}
-          onChange={(v) => updateEnv('attack', v)}
+        <PanelKnob
+          value={env.attack / 127}
+          onChange={(v) => updateEnv('attack', Math.round(v * 127))}
           label="Atk"
-          color={OPERATOR_COLORS[opIndex]}
         />
-        <Knob
-          value={env.decay}
-          min={0} max={127}
-          onChange={(v) => updateEnv('decay', v)}
+        <PanelKnob
+          value={env.decay / 127}
+          onChange={(v) => updateEnv('decay', Math.round(v * 127))}
           label="Dec"
-          color={OPERATOR_COLORS[opIndex]}
         />
-        <Knob
-          value={env.end}
-          min={0} max={127}
-          onChange={(v) => updateEnv('end', v)}
+        <PanelKnob
+          value={env.end / 127}
+          onChange={(v) => updateEnv('end', Math.round(v * 127))}
           label="End"
-          color={OPERATOR_COLORS[opIndex]}
         />
       </div>
       </div>

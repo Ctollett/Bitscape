@@ -164,6 +164,24 @@ export const borderRadius = {
 } as const
 
 // ------------------------------------------------------------
+// Panel Layout
+// ------------------------------------------------------------
+
+export const panel = {
+  padding: {
+    x: 24,  // horizontal padding inside a panel
+    y: 16,  // vertical padding inside a panel
+  },
+  gap: {
+    control: 24,  // gap between controls within a panel
+    group:   48,  // gap between logical groups within a panel
+  },
+  section: {
+    labelHeight: 16,  // height reserved for the section label row
+  },
+} as const
+
+// ------------------------------------------------------------
 // Typography
 // ------------------------------------------------------------
 

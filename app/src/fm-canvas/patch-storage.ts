@@ -4,6 +4,7 @@ import type { FMCanvasPatch } from "./types";
 export interface SavedPatch {
     id: string;
     name: string;
+    category: string;
     createdAt: number;
     patch: FMCanvasPatch;
 }
@@ -30,6 +31,7 @@ export const saveToLibrary = (name: string, patch: FMCanvasPatch): SavedPatch =>
     const entry: SavedPatch = {
         id: crypto.randomUUID(),
         name: name,
+        category: '',
         createdAt: Date.now(),
         patch: patch,
     }

@@ -1,13 +1,12 @@
 import { ADSRSection } from "../components/global-params/ADSRSection";
 import { colors } from '../tokens';
-import { FilterPanel } from './FilterPanel';
 import { TabPanel } from "./TabPanel";
 
 export function GlobalControlPanel() {
   return (
     <div style={{
       width: '1200px',
-      height: '270px',
+      height: '264px',
       display: 'flex',
       background: colors.bg.panel,
       userSelect: 'none',

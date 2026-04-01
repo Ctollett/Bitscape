@@ -196,7 +196,7 @@ export function useEngineSync(patch: FMCanvasPatch): void {
     if (!prev || prev.filterType !== current.filterType) {
       setParam('set_filter_type', current.filterType);
       const rawCutoff = Math.min(127, current.filterCutoff);
-      setParam('set_filter_cutoff', 20 * Math.pow(1000, rawCutoff / 127));
+      setParam('set_filter_cutoff', 1 * Math.pow(20000, rawCutoff / 127));
       const rawRes = Math.min(127, current.filterResonance);
       setParam('set_filter_resonance', Math.max(0.5, 0.1 + (rawRes / 127) * 19.9));
     }
@@ -205,7 +205,7 @@ export function useEngineSync(patch: FMCanvasPatch): void {
     // Clamp to 127 max to guard against stale sessions that stored raw Hz
     if (!prev || prev.filterCutoff !== current.filterCutoff) {
       const rawCutoff = Math.min(127, current.filterCutoff);
-      const hz = 20 * Math.pow(1000, rawCutoff / 127);
+      const hz = 1 * Math.pow(20000, rawCutoff / 127);
       setParam('set_filter_cutoff', hz);
     }
 

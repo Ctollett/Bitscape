@@ -74,9 +74,9 @@ export function SteppedKnob({size=52, width: wProp, height: hProp, steps, value,
                 const isCurrent = i === currentIndex
                 const startTick = polarXY(cx, cy, r * 0.772, tickAngle)
                 const endTick = polarXY(cx, cy, r * 1.193, tickAngle)
-                return <line x1={startTick.x} y1={startTick.y} x2={endTick.x} y2={endTick.y} key={i} stroke={isCurrent ? color : 'grey'} strokeWidth={3} strokeLinecap='round'></line>
+                return <line x1={startTick.x} y1={startTick.y} x2={endTick.x} y2={endTick.y} key={i} stroke={isCurrent ? color : 'grey'} strokeWidth={2} strokeLinecap='round'></line>
             })}
-             <line stroke='white' strokeWidth={4} strokeLinecap='round' x1={indicatorStart.x} y1={indicatorStart.y} x2={indicatorEnd.x} y2={indicatorEnd.y} />
+             <line stroke='white' strokeWidth={2} strokeLinecap='round' x1={indicatorStart.x} y1={indicatorStart.y} x2={indicatorEnd.x} y2={indicatorEnd.y} />
             </svg>
             <div style={{display: 'grid'}}>
                 <span style={{gridArea: '1/1', fontSize: '12px', textAlign: 'center', opacity: isActive ? 0 : 1}}>{label}</span>

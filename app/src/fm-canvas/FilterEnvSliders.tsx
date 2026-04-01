@@ -18,9 +18,14 @@ export function FilterEnvSliders() {
   return (
     <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
       <PanelSlider
+        value={patch.filterEnvAmount / 127}
+        onChange={(v) => dispatch({ type: 'SET_FILTER_ENV_AMOUNT', value: v * 127 })}
+        label="Env"
+      />
+      <PanelSlider
         value={patch.filterEnvAttack / 127}
         onChange={(v) => setFilterEnv({ attack: v * 127 })}
-        label="Atk"
+        label="Attack"
       />
       <PanelSlider
         value={patch.filterEnvRelease / 127}

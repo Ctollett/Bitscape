@@ -37,6 +37,11 @@ export async function initAudio(): Promise<void> {
         // Instant attack, full sustain, short release
         setParam('set_amp_env', 0, 0, 127, 10);
 
+        // Init filter: LP type, fully open at 20kHz
+        setParam('set_filter_type', 0);
+        setParam('set_filter_cutoff', 20000);
+        setParam('set_filter_resonance', 0.5);
+
         // No FM modulation — pure carrier sine
         setParam('set_mod_depth_a', 0.0);
         setParam('set_mod_depth_b', 0.0);

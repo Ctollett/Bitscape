@@ -1,14 +1,20 @@
 import { usePatch } from "../../fm-canvas/patch-context";
-import { Knob } from "../Knob";
 import { VerticalSlider } from "../VerticalSlider";
+import { FilterShape } from "../FilterShape";
+import type { FilterType } from "../FilterShape";
+import { colors, typography, panel, spacing } from "../../tokens";
 
 const FILTER_TYPES = [
-  { value: 0, label: 'LP' },
-  { value: 1, label: 'HP' },
+  { value: 0, label: 'LP', id: 'lp' as FilterType },
+  { value: 1, label: 'HP', id: 'hp' as FilterType },
+  { value: 2, label: 'BP', id: 'bp' as FilterType },
 ];
+
+const NUM_TO_TYPE: FilterType[] = ['lp', 'hp', 'bp'];
 
 export function FilterPanel() {
   const { patch, dispatch } = usePatch();
+  const filterType = NUM_TO_TYPE[patch.filterType] ?? 'lp';
 
   return (
     <div style={{
@@ -16,60 +22,71 @@ export function FilterPanel() {
       height: '100%',
       display: 'flex',
       alignItems: 'center',
-      gap: '24px',
-      padding: '12px 24px',
+      padding: `${panel.padding.y}px ${panel.padding.x}px`,
+      gap: panel.gap.control,
     }}>
 
-      {/* Filter Type Toggle */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '1px' }}>Type</span>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {FILTER_TYPES.map(ft => (
-            <button
-              key={ft.value}
-              onClick={() => dispatch({ type: 'SET_FILTER_TYPE', value: ft.value })}
-              style={{
-                padding: '6px 12px',
-                background: patch.filterType === ft.value ? '#4a9eff' : 'transparent',
-                border: '1px solid',
-                borderColor: patch.filterType === ft.value ? '#4a9eff' : '#333',
-                borderRadius: '4px',
-                color: patch.filterType === ft.value ? '#fff' : '#555',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
-            >
-              {ft.label}
-            </button>
-          ))}
+      {/* Type toggle + filter curve */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm, alignSelf: 'center' }}>
+        <div style={{ display: 'flex', gap: spacing.md }}>
+          {FILTER_TYPES.map(ft => {
+            const isActive = patch.filterType === ft.value;
+            return (
+              <span
+                key={ft.value}
+                onClick={() => dispatch({ type: 'SET_FILTER_TYPE', value: ft.value })}
+                style={{
+                  ...typography.label.sm,
+                  color: isActive ? colors.text.primary : colors.text.muted,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                }}
+              >
+                {ft.label}
+              </span>
+            );
+          })}
         </div>
+        <FilterShape
+          type={filterType}
+          cutoff={patch.filterCutoff / 127}
+          resonance={patch.filterResonance / 127}
+          onCutOffChange={(v) => dispatch({ type: 'SET_FILTER_CUTOFF', value: Math.round(v * 127) })}
+          onResonanceChange={(v) => dispatch({ type: 'SET_FILTER_RESONANCE', value: Math.round(v * 127) })}
+        />
       </div>
 
-      <VerticalSlider label="Cutoff" value={patch.filterCutoff} displayValue={patch.filterCutoff.toString()}
-        min={0} max={127}
+      {/* Divider */}
+      <div style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border.subtle }} />
+
+      {/* Cutoff + Resonance */}
+      <VerticalSlider label="Cutoff" value={patch.filterCutoff} min={0} max={127}
+        color={colors.bg.canvas}
         onChange={(v) => dispatch({ type: 'SET_FILTER_CUTOFF', value: v })}
       />
-
-      <VerticalSlider label="Resonance" value={patch.filterResonance} displayValue={patch.filterResonance.toString()}
-        min={0} max={127}
+      <VerticalSlider label="Resonance" value={patch.filterResonance} min={0} max={127}
+        color={colors.bg.canvas}
         onChange={(v) => dispatch({ type: 'SET_FILTER_RESONANCE', value: v })}
       />
 
-      <Knob label="Env Amt" value={patch.filterEnvAmount} displayValue={patch.filterEnvAmount.toString()}
-        min={0} max={127}
+      {/* Divider */}
+      <div style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border.subtle }} />
+
+      {/* Envelope sliders */}
+      <VerticalSlider label="Env" value={patch.filterEnvAmount} min={0} max={127}
+        color={colors.bg.canvas}
         onChange={(v) => dispatch({ type: 'SET_FILTER_ENV_AMOUNT', value: v })}
       />
-
-      <Knob label="Attack" value={patch.filterEnvAttack} displayValue={patch.filterEnvAttack.toString()}
-        min={0} max={127}
+      <VerticalSlider label="Attack" value={patch.filterEnvAttack} min={0} max={127}
+        color={colors.bg.canvas}
         onChange={(v) => dispatch({ type: 'SET_FILTER_ENV', attack: v, decay: patch.filterEnvDecay, sustain: patch.filterEnvSustain, release: patch.filterEnvRelease })}
       />
-
-      <Knob label="Decay" value={patch.filterEnvDecay} displayValue={patch.filterEnvDecay.toString()}
-        min={0} max={127}
+      <VerticalSlider label="End" value={patch.filterEnvDecay} min={0} max={127}
+        color={colors.bg.canvas}
         onChange={(v) => dispatch({ type: 'SET_FILTER_ENV', attack: patch.filterEnvAttack, decay: v, sustain: patch.filterEnvSustain, release: patch.filterEnvRelease })}
       />
+
 
     </div>
   );

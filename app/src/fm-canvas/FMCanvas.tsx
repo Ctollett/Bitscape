@@ -45,8 +45,8 @@ if(interaction.mode === 'drawing-connection') {
   <div ref={canvasRef} onPointerUp={onPointerUp} onPointerMove={onPointerMove} className='fm-canvas' style={{position: 'relative', width: CANVAS_WIDTH, height: CANVAS_HEIGHT}} onPointerDown={() => setSelectedOp(null)}>
     <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
       <filter id="canvas-noise">
-        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" />
-        <feColorMatrix type="matrix" values="1 0 0 0 0  0.8 0 0 0 0  0 0 0.6 0 0  0 0 0 0.08 0" />
+        <feTurbulence type="fractalNoise" baseFrequency="0.35 0.25" numOctaves="5" stitchTiles="stitch" />
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0.9 0 0 0 0  0.7 0 0 0 0  0 0 0 0.06 0" />
       </filter>
       <rect width="100%" height="100%" filter="url(#canvas-noise)" />
     </svg>

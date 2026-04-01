@@ -9,17 +9,12 @@ export function FilterMainSliders() {
       <PanelSlider
         value={patch.filterCutoff / 127}
         onChange={(v) => dispatch({ type: 'SET_FILTER_CUTOFF', value: v * 127 })}
-        label="Cut"
+        label="Cutoff"
       />
       <PanelSlider
         value={patch.filterResonance / 127}
         onChange={(v) => dispatch({ type: 'SET_FILTER_RESONANCE', value: v * 127 })}
-        label="Res"
-      />
-      <PanelSlider
-        value={patch.filterEnvAmount}
-        onChange={(v) => dispatch({ type: 'SET_FILTER_ENV_AMOUNT', value: v })}
-        label="Env"
+        label="Resonance"
       />
     </div>
   );

@@ -7,7 +7,7 @@ export function FilterKnobs() {
   const [filterMix, setFilterMix] = useState(1);
 
   return (
-    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
       <PanelKnob value={filterDrive} onChange={setFilterDrive} label="Drive" />
       <PanelKnob value={filterMix} onChange={setFilterMix} label="Mix" />
     </div>

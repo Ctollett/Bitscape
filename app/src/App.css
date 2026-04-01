@@ -1,7 +1,19 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 @font-face {
   font-family: 'PP Fraktion Mono';
-  src: url('../src//assets/fonts/PPFraktionMono-Bold.otf') format('opentype');
+  src: url('./assets/fonts/PPFraktionMono-Bold.otf') format('opentype');
   font-weight: 700;
+}
+
+@font-face {
+  font-family: 'PP Mori';
+  src: url('./assets/fonts/PPMori-Semibold.otf') format('opentype');
+  font-weight: 600;
 }
 
 

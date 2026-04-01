@@ -20,13 +20,13 @@ export function TabPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('filter')
 
   return (
-   <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingLeft: 24 }}>
+   <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingLeft: 24, paddingRight: 24, paddingBottom: 24, boxSizing: 'border-box' }}>
       <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color="blue" gap={spacing['2xl']} />
-      <div style={{ flex: 1, paddingTop: spacing.xl, gap: spacing['2xl'] }}>
-        {activeTab === 'filter'  && <div><FilterPanel/></div>}
-        {activeTab === 'effects' && <div><EffectsPanel/></div>}
-        {activeTab === 'lfo1'   && <div><LFO1Panel/></div>}
-        {activeTab === 'lfo2'   && <div><LFO2Panel/></div>}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 16 }}>
+        {activeTab === 'filter'  && <FilterPanel/>}
+        {activeTab === 'effects' && <EffectsPanel/>}
+        {activeTab === 'lfo1'   && <LFO1Panel/>}
+        {activeTab === 'lfo2'   && <LFO2Panel/>}
       </div>
     </div>
   );
