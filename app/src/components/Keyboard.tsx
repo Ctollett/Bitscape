@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { noteOn, noteOff } from '../audio/engine';
+import { emitNoteOn, emitNoteOff } from '../audio/note-events';
 import { borderRadius, colors, primitive } from '../tokens';
 
 function midiToFreq(note: number): number {
@@ -83,7 +84,9 @@ export default function Keyboard() {
   const handleNoteOn = useCallback((midiNote: number) => {
     if (activeRef.current.has(midiNote)) return;
     activeRef.current.add(midiNote);
-    noteOn(midiNote % 8, midiToFreq(midiNote));
+    const freq = midiToFreq(midiNote);
+    noteOn(midiNote % 8, freq);
+    emitNoteOn(midiNote, freq);
     setActiveKeys(new Set(activeRef.current));
   }, []);
 
@@ -91,6 +94,7 @@ export default function Keyboard() {
     if (!activeRef.current.has(midiNote)) return;
     activeRef.current.delete(midiNote);
     noteOff(midiNote % 8);
+    emitNoteOff(midiNote);
     setActiveKeys(new Set(activeRef.current));
   }, []);
 

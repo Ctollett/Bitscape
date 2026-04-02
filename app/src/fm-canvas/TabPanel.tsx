@@ -20,8 +20,10 @@ export function TabPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('filter')
 
   return (
-   <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, paddingLeft: 24, paddingRight: 24, paddingBottom: 24, boxSizing: 'border-box' }}>
-      <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color="blue" gap={spacing['2xl']} />
+   <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, boxSizing: 'border-box' }}>
+      <div style={{ paddingLeft: 24, paddingRight: 24 }}>
+        <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color="blue" gap={spacing['2xl']} />
+      </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 16 }}>
         {activeTab === 'filter'  && <FilterPanel/>}
         {activeTab === 'effects' && <EffectsPanel/>}
