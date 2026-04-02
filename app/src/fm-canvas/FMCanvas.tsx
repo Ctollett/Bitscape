@@ -6,6 +6,7 @@ import { ConnectionLine } from './ConnectionLine';
 import { DraftConnection } from './DraftConnection';
 import { OperatorDetailPanel } from './OperatorDetailPanel';
 import type { Point } from './types';
+import { edgePoint } from './utils';
 import './fm-canvas.css';
 
 interface InteractionState {
@@ -20,6 +21,7 @@ const [selectedOp, setSelectedOp] = useState<number | null>(null)
 const [interaction, setInteraction] = useState<InteractionState>({ mode: 'idle', fromOp: null, mousePos: null})
 
 const canvasRef = useRef<HTMLDivElement>(null)
+
 
 const onPointerMove = (e: React.PointerEvent) => {
 
@@ -53,7 +55,7 @@ if(interaction.mode === 'drawing-connection') {
     <svg style={{position: 'absolute', top: 0, left: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, pointerEvents: 'none'}}>
 
       {patch.connections.map((conn) => (
-        <ConnectionLine  src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
+        <ConnectionLine  srcOffset={conn.srcOffset} dstOffset={conn.dstOffset} src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
       dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst} onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
       ))}
       {interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.mousePos && (
@@ -70,14 +72,23 @@ if(interaction.mode === 'drawing-connection') {
       onStartConnection={(opIndex) => setInteraction({ mode: 'drawing-connection', fromOp: opIndex, mousePos: null })}
       onEndConnection={(targetOp) => {
   if (interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.fromOp !== targetOp) {
-    dispatch({ type: 'ADD_CONNECTION', src: interaction.fromOp, dst: targetOp })
+
+    const srcPos = patch.operators[interaction.fromOp].position
+    const dstPos = patch.operators[targetOp].position
+    const srcPoint = edgePoint(srcPos, dstPos)
+    const dstPoint = edgePoint(dstPos, srcPos)
+
+    const srcOffset = { x: srcPoint.x - srcPos.x, y: srcPoint.y - srcPos.y }
+    const dstOffset = { x: dstPoint.x - dstPos.x, y: dstPoint.y - dstPos.y }
+
+
+    dispatch({ type: 'ADD_CONNECTION', src: interaction.fromOp, dst: targetOp, srcOffset, dstOffset })
     setInteraction({ mode: 'idle', fromOp: null, mousePos: null })
   }
 }}
-
       onOpenDetail={() => {}}
       onSelect={setSelectedOp}
-      isSelected={selectedOp === i}
+isSelected={selectedOp === i}
       />
     ))}
     {selectedOp !== null && (

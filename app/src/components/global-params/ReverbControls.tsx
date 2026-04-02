@@ -8,7 +8,7 @@ export function ReverbControls() {
     const update = (partial: Partial<{ enabled: boolean; decay: number; damping: number; mix: number }>) =>
     dispatch({
       type: 'SET_REVERB',
-      enabled: true,
+      enabled: patch.reverbEnabled,
       decay: patch.reverbDecay,
       damping: patch.reverbDamping,
       mix: patch.reverbMix,
@@ -19,9 +19,8 @@ export function ReverbControls() {
   return (
     <div style={{display: 'flex', gap: 16, width: 86, height: 140, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
        <HorizontalSlider value={patch.reverbDecay} onChange={(v) => update({ decay: v })} label="decay" />
-<HorizontalSlider value={patch.reverbDamping} onChange={(v) => update({ damping: v })} label="damping" />
-<HorizontalSlider value={patch.reverbMix} onChange={(v) => update({ mix: v })} label="mix" />
-
+       <HorizontalSlider value={patch.reverbDamping} onChange={(v) => update({ damping: v })} label="damping" />
+       <HorizontalSlider value={patch.reverbMix} onChange={(v) => update({ mix: v })} label="mix" />
     </div>
   );
 }

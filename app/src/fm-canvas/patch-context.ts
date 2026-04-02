@@ -6,7 +6,7 @@ import type { FMCanvasPatch, Point, WaveTypeId } from './types';
 export type PatchAction =
   | { type: 'MOVE_OPERATOR'; opIndex: number; position: Point }
   | { type: 'SET_RING_ANGLE'; opIndex: number; angle: number }
-  | { type: 'ADD_CONNECTION'; src: number; dst: number }
+  | { type: 'ADD_CONNECTION'; src: number; dst: number; srcOffset: Point, dstOffset: Point }
   | { type: 'REMOVE_CONNECTION'; src: number; dst: number }
   | { type: 'SET_SELF_LOOP'; opIndex: number; radius: number }
   | { type: 'REMOVE_SELF_LOOP'; opIndex: number }

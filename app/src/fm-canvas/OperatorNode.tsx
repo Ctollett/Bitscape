@@ -36,8 +36,8 @@ interface OperatorNodeProps {
   onStartConnection: (opIndex: number) => void;
   onEndConnection: (opIndex: number) => void;
   onOpenDetail: (opIndex: number) => void;
-    onSelect: (opIndex: number) => void
-isSelected: boolean
+  onSelect: (opIndex: number) => void;
+  isSelected: boolean;
 }
 
 export function OperatorNode({
@@ -117,7 +117,6 @@ const onPointerUp = (e: React.PointerEvent) => {
   rafRef.current = 0;
   nodeRef.current?.releasePointerCapture(e.pointerId)
   onEndConnection(opIndex)
-
 }
 
 

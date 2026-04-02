@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePatch } from '../../fm-canvas/patch-context';
 import { onNoteOn, onNoteOff } from '../../audio/note-events';
 
@@ -6,16 +6,14 @@ const BASE_RX = 13.37;
 const BASE_RY = 41;
 const CX_CENTER = 34.60;
 const CY = 42;
-const SPREAD = 20.23;
+const SPAWN_INTERVAL = 18;
+const MAX_RIPPLES = 20;
 
 interface Ripple {
-  progress: number;        // position (0 → 1+)
-  releasing: boolean;      // true once note released
-  releaseProgress: number; // 0 → 1 after release, drives smooth fade-out
-}
-
-interface PendingRipple {
-  spawnAt: number;
+  offset: number;
+  speed: number;
+  fade: number;
+  echoIndex: number;
 }
 
 interface Impulse {
@@ -28,125 +26,134 @@ export function ReverbDesign() {
   const patchRef = useRef(patch);
   patchRef.current = patch;
 
+  const svgRef = useRef<SVGSVGElement>(null);
   const ripples = useRef<Ripple[]>([]);
-  const pending = useRef<PendingRipple[]>([]);
   const impulses = useRef<Impulse[]>([]);
   const frameRef = useRef(0);
   const activeNotes = useRef(0);
   const nextAutoSpawn = useRef(0);
-  const breathScalesRef = useRef([1, 1]);
+  const echoCounter = useRef(0);
   const rafRef = useRef<number>();
-  const [, forceRender] = useState(0);
+
+  const rippleEls = useRef<Array<{ l: SVGEllipseElement; r: SVGEllipseElement }>>([]);
+  const staticEls = useRef<[SVGGElement | null, SVGGElement | null]>([null, null]);
+
+  const spawnRipple = (echoIndex: number) => {
+    if (ripples.current.length >= MAX_RIPPLES) return;
+    ripples.current.push({ offset: 0, speed: 1.2, fade: 1.0, echoIndex });
+  };
 
   useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    for (let i = 0; i < MAX_RIPPLES; i++) {
+      const l = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      const r = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      for (const el of [l, r]) {
+        el.setAttribute('rx', String(BASE_RX));
+        el.setAttribute('ry', String(BASE_RY));
+        el.setAttribute('cy', String(CY));
+        el.setAttribute('stroke', '#D94F2B');
+        el.setAttribute('stroke-width', '1.5');
+        el.setAttribute('fill', 'none');
+        el.setAttribute('opacity', '0');
+        svg.insertBefore(el, svg.firstChild);
+      }
+      rippleEls.current.push({ l, r });
+    }
+
     const offNoteOn = onNoteOn(() => {
       activeNotes.current += 1;
-      pending.current.push({ spawnAt: frameRef.current });
-      impulses.current.push({ amplitude: 1.0, phase: Math.PI / 2 }); // start at sin peak for immediate response
+      echoCounter.current = 0;
+      spawnRipple(0);
+      // kick an impulse for the breath
+      impulses.current.push({ amplitude: 1.0, phase: Math.PI / 2 });
     });
     const offNoteOff = onNoteOff(() => {
       activeNotes.current = Math.max(0, activeNotes.current - 1);
-      // mark all active ripples to start fading when note released
-      if (activeNotes.current === 0) {
-        ripples.current = ripples.current.map(rp => ({ ...rp, releasing: true }));
-      }
     });
-    return () => { offNoteOn(); offNoteOff(); };
-  }, []);
 
-  useEffect(() => {
     const tick = () => {
-      const rippleSpeed = 0.007 + (1 - patchRef.current.reverbDecay) * 0.016;
-      const fadeOutRate = 0.012 + (1 - patchRef.current.reverbDecay) * 0.03;
-      const spawnInterval = Math.round(10 + (1 - patchRef.current.reverbDecay) * 8);
-
       if (activeNotes.current > 0 && frameRef.current >= nextAutoSpawn.current) {
-        pending.current.push({ spawnAt: frameRef.current });
-        nextAutoSpawn.current = frameRef.current + spawnInterval;
+        echoCounter.current += 1;
+        spawnRipple(echoCounter.current);
+        nextAutoSpawn.current = frameRef.current + SPAWN_INTERVAL;
       }
 
-      pending.current = pending.current.filter(p => {
-        if (frameRef.current >= p.spawnAt) {
-          ripples.current.push({ progress: 0, releasing: false, releaseProgress: 0 });
-          return false;
-        }
-        return true;
-      });
+      const fadeRate = 0.003 + (1 - patchRef.current.reverbDecay) * 0.04;
+      const damping = patchRef.current.reverbDamping;
+      const mix = Math.max(0.15, patchRef.current.reverbMix);
+      const maxSpread = 20.23 * 1.5;
+      const deceleration = 0.97 - damping * 0.055;
 
       ripples.current = ripples.current
         .map(rp => {
-          const releasing = rp.releasing || rp.progress > 0.95;
-          const releaseProgress = releasing ? rp.releaseProgress + fadeOutRate : 0;
-          return { ...rp, progress: rp.progress + rippleSpeed, releasing, releaseProgress };
+          const speed = rp.speed * deceleration;
+          return { ...rp, speed, offset: rp.offset + speed, fade: rp.fade * (1 - fadeRate) };
         })
-        .filter(rp => rp.releaseProgress < 1 && rp.progress < 1.2);
+        .filter(rp => rp.fade > 0.01 && rp.speed > 0.02 && rp.offset < maxSpread + 10);
 
-      // Impulse-driven breath on the two static rings
-      const decayRate = 0.012 + (1 - patchRef.current.reverbDecay) * 0.025;
+      // Decay impulses
+      const breathDecay = 0.015 + (1 - patchRef.current.reverbDecay) * 0.03;
       impulses.current = impulses.current
-        .map(imp => ({ amplitude: imp.amplitude * (1 - decayRate), phase: imp.phase + 0.07 }))
+        .map(imp => ({ amplitude: imp.amplitude * (1 - breathDecay), phase: imp.phase + 0.08 }))
         .filter(imp => imp.amplitude > 0.005);
 
-      breathScalesRef.current = [0, Math.PI * 0.5].map((phaseOffset) => {
+      // Compute breath scales for each static ellipse (slight phase offset for organic feel)
+      const breathScales = [0, Math.PI * 0.4].map(phaseOffset => {
         const displacement = impulses.current.reduce((sum, imp) =>
           sum + imp.amplitude * Math.sin(imp.phase + phaseOffset), 0);
-        return 1 + 0.18 * displacement;
+        return 1 + 0.15 * displacement;
+      });
+
+      // Update ripple elements
+      for (let i = 0; i < MAX_RIPPLES; i++) {
+        const rp = ripples.current[i];
+        const els = rippleEls.current[i];
+        if (!rp) {
+          els.l.setAttribute('opacity', '0');
+          els.r.setAttribute('opacity', '0');
+        } else {
+          const fadeIn = Math.min(1, rp.offset / 8);
+          const opacity = String(fadeIn * rp.fade * 0.85 * mix);
+          els.l.setAttribute('cx', String((CX_CENTER - 7) - rp.offset));
+          els.r.setAttribute('cx', String((CX_CENTER + 7) + rp.offset));
+          els.l.setAttribute('opacity', opacity);
+          els.r.setAttribute('opacity', opacity);
+        }
+      }
+
+      // Update static ellipse breath via transform
+      const cxs = [CX_CENTER - 7, CX_CENTER + 7];
+      staticEls.current.forEach((g, i) => {
+        if (g) {
+          const s = breathScales[i];
+          const cx = cxs[i];
+          g.setAttribute('transform', `translate(${cx}, ${CY}) scale(${s}) translate(${-cx}, ${-CY})`);
+        }
       });
 
       frameRef.current += 1;
-      forceRender(n => n + 1);
       rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      offNoteOn();
+      offNoteOff();
+    };
   }, []);
 
-  const mix = Math.max(0.15, patchRef.current.reverbMix);
-  const maxSpread = SPREAD * 1.5 * (1 - patchRef.current.reverbDamping * 0.5);
-
   return (
-    <svg width="70" height="84" viewBox="0 0 70 84" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
-      {ripples.current.map((rp, ri) => {
-        const offset = rp.progress * maxSpread;
-        // smooth sine ease-in on emergence, cosine ease-out on release
-        const fadeIn = Math.sin(Math.min(rp.progress / 0.2, 1) * Math.PI / 2);
-        const fadeOut = rp.releasing ? Math.cos(rp.releaseProgress * Math.PI / 2) : 1.0;
-        const opacity = fadeIn * fadeOut * 0.75 * mix;
-        return [
-          <ellipse
-            key={`${ri}-l`}
-            cx={(CX_CENTER - 7) - offset}
-            cy={CY}
-            rx={BASE_RX}
-            ry={BASE_RY}
-            stroke="#D94F2B"
-            strokeWidth={1.5}
-            fill="none"
-            opacity={opacity}
-          />,
-          <ellipse
-            key={`${ri}-r`}
-            cx={(CX_CENTER + 7) + offset}
-            cy={CY}
-            rx={BASE_RX}
-            ry={BASE_RY}
-            stroke="#D94F2B"
-            strokeWidth={1.5}
-            fill="none"
-            opacity={opacity}
-          />,
-        ];
-      })}
-
-      {[CX_CENTER - 7, CX_CENTER + 7].map((cx, i) => {
-        const s = breathScalesRef.current[i];
-        return (
-          <g key={i} transform={`translate(${cx}, ${CY}) scale(${s}) translate(${-cx}, ${-CY})`}>
-            <ellipse cx={cx} cy={CY} rx={BASE_RX} ry={BASE_RY} stroke="#D94F2B" strokeWidth={2} fill="none" />
-          </g>
-        );
-      })}
+    <svg ref={svgRef} width="70" height="84" viewBox="0 0 70 84" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+      <g ref={el => { staticEls.current[0] = el; }}>
+        <ellipse cx={CX_CENTER - 7} cy={CY} rx={BASE_RX} ry={BASE_RY} stroke="#D94F2B" strokeWidth={2} fill="none" />
+      </g>
+      <g ref={el => { staticEls.current[1] = el; }}>
+        <ellipse cx={CX_CENTER + 7} cy={CY} rx={BASE_RX} ry={BASE_RY} stroke="#D94F2B" strokeWidth={2} fill="none" />
+      </g>
     </svg>
   );
 }

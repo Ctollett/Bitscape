@@ -66,7 +66,7 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
       );
       if (exists) return state;
       const next = shallowCopy(state);
-      next.connections.push({ src: action.src, dst: action.dst });
+      next.connections.push({ src: action.src, dst: action.dst, srcOffset: action.srcOffset, dstOffset: action.dstOffset });
       const depths = computeModDepths(next);
       next.modDepthA = depths.modDepthA;
       next.modDepthB = depths.modDepthB;

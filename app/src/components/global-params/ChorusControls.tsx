@@ -7,7 +7,7 @@ export function ChorusControls() {
   const update = (partial: Partial<{ depth: number; speed: number; width: number; hpfCutoff: number; delayMs: number; reverbSend: number }>) =>
     dispatch({
       type: 'SET_CHORUS',
-      enabled: true,
+      enabled: patch.chorusEnabled,
       depth: patch.chorusDepth,
       speed: patch.chorusSpeed,
       width: patch.chorusWidth,

@@ -22,6 +22,8 @@ export interface OperatorPatch {
 export interface Connection {
   src: number;  // operator index 0-3
   dst: number;  // operator index 0-3  (src === dst means self-loop / feedback)
+  srcOffset: Point;
+  dstOffset: Point;
 }
 
 /** Self-loop visual state for feedback */

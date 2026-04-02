@@ -7,7 +7,7 @@ export function DelayControls() {
   const update = (partial: Partial<{ ms: number; feedback: number; mix: number }>) =>
     dispatch({
       type: 'SET_DELAY',
-      enabled: true,
+      enabled: patch.delayEnabled,
       ms: patch.delayMs,
       feedback: patch.delayFeedback,
       mix: patch.delayMix,
