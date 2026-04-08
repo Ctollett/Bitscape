@@ -44,9 +44,8 @@ function xToCutoff(x: number): number {
 const PASSBAND_Y = PAD_T + PLOT_H * 0.45   // mid-height
 const STOPBAND_Y = H + 20                  // below the SVG — goes out of view
 
-function buildPath(type: FilterType, cutoff: number, resonance: number): string {
+function buildPath(type: FilterType, cutoff: number, peakY: number): string {
   const cx      = cutoffToX(cutoff)
-  const peakY   = PASSBAND_Y - resonance * PLOT_H * 0.45
   const leftY   = type === 'lp' ? PASSBAND_Y : STOPBAND_Y
   const rightY  = type === 'hp' ? PASSBAND_Y : STOPBAND_Y
   // How wide the resonance bump and rolloff shoulder are
@@ -104,9 +103,9 @@ function cutoffToFreqLabel(cutoff: number): string {
 }
 
 export function FilterShape({ type, cutoff, resonance, onCutOffChange, onResonanceChange }: FilterShapeProps) {
-  const pathD  = buildPath(type, cutoff, resonance)
   const cx     = cutoffToX(cutoff)
-  const peakY  = PASSBAND_Y - resonance * PLOT_H * 0.45
+  const peakY  = Math.max(PAD_T + 14, PASSBAND_Y - resonance * PLOT_H * 0.45)
+  const pathD  = buildPath(type, cutoff, peakY)
   const freqLabel = cutoffToFreqLabel(cutoff)
 
   const isDragging = useRef(false)
@@ -192,7 +191,7 @@ export function FilterShape({ type, cutoff, resonance, onCutOffChange, onResonan
       <path
         d={pathD}
         fill="none"
-        stroke={colors.bg.canvas}
+        stroke={colors.section.filter}
         strokeWidth={2}
         strokeLinecap="round"
         clipPath="url(#plot-area)"
@@ -204,7 +203,7 @@ export function FilterShape({ type, cutoff, resonance, onCutOffChange, onResonan
         <line
           x1={cx} y1={peakY}
           x2={cx} y2={PAD_T + PLOT_H}
-          stroke={colors.bg.canvas}
+          stroke={colors.section.filter}
           strokeWidth={1}
           strokeDasharray="3 4"
           clipPath="url(#plot-area)"
@@ -216,7 +215,7 @@ export function FilterShape({ type, cutoff, resonance, onCutOffChange, onResonan
         <text
           x={cx + 14}
           y={peakY - 10}
-          fill={colors.text.primary}
+          fill={colors.section.filter}
           style={{ ...typography.label.sm, fontSize: 7 }}
         >
           {freqLabel}
@@ -234,12 +233,12 @@ export function FilterShape({ type, cutoff, resonance, onCutOffChange, onResonan
         <motion.circle
           animate={{ r: isActive ? 14 : 10 }}
           fill="none"
-          stroke={colors.control.indicator}
+          stroke={colors.section.filter}
           strokeWidth={1}
           transition={{ type: 'spring', stiffness: 200, damping: 35 }}
         />
         {/* Inner filled circle */}
-        <circle r={6} fill={colors.bg.canvas} />
+        <circle r={6} fill={colors.section.filter} />
       </g>
 
     </svg>

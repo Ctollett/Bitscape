@@ -21,7 +21,7 @@ interface FilterSelectProps {
 export function FilterSelect({ type, cutoff, resonance, onTypeChange, onCutoffChange, onResonanceChange }: FilterSelectProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <OptionMenu options={FILTER_OPTIONS} value={type} onChange={onTypeChange} color={colors.text.primary} />
+      <OptionMenu options={FILTER_OPTIONS} value={type} onChange={onTypeChange} color={colors.section.filter} />
       <FilterShape type={type} cutoff={cutoff} resonance={resonance} onCutOffChange={onCutoffChange} onResonanceChange={onResonanceChange} />
     </div>
   );

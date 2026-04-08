@@ -140,6 +140,7 @@ export default function Keyboard() {
       padding: PAD,
       background: colors.bg.panel,
       borderRadius: borderRadius.lg,
+      boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
       userSelect: 'none',
       display: 'inline-block',
     }}>

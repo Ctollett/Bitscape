@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { WaveTypeId } from './types';
-import { spacing, typography } from '../tokens'
+import { spacing, typography, colors} from '../tokens'
 
 import SineIcon from '../component-images/sine.svg?react'
 import SawIcon from '../component-images/saw.svg?react'
@@ -30,7 +30,7 @@ export function OptionMenu<T extends string | number>({ options, value, onChange
               <button
                 onMouseEnter={() => setHovered(option.id)}
                 onMouseLeave={() => setHovered(null)}
-                style={{ ...typography.label.lg, lineHeight: 1, display: 'block', color: isActive ? color : isHovered ? '#aaa' : '#555', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: 0, margin: 0 }}
+                style={{ ...typography.label.lg, lineHeight: 1, display: 'block', color: isActive ? color : isHovered ? colors.section.filter :  '#aaa', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: 0, margin: 0 }}
                 onClick={() => onChange(option.id)}
               >
                 {option.label}

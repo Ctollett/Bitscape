@@ -8,7 +8,7 @@ export function PresetSelect() {
       {/* Row 1: pill */}
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <button style={{ backgroundColor: 'transparent', border: 'none', padding: 0, margin: 0, lineHeight: 1, display: 'flex' }}><LeftArrow /></button>
-        <span style={{...typography.label.lg, backgroundColor: colors.text.muted, width: '120px', height: '28px', borderRadius: borderRadius.md, display: 'flex', justifyContent: 'center', alignItems: 'center',color: colors.text.inverse}}>SOFT PAD</span>
+        <span style={{...typography.label.lg, width: '120px', height: '28px', borderRadius: borderRadius.md, display: 'flex', justifyContent: 'center', alignItems: 'center',color: colors.text.inverse}}>SOFT PAD</span>
         <button style={{ backgroundColor: 'transparent', border: 'none', padding: 0, margin: 0, lineHeight: 1, display: 'flex' }}><RightArrow /></button>
       </div>
       {/* Row 2: category + dots */}

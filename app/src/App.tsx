@@ -33,17 +33,19 @@ function App() {
         </button>
       ) : (
         <PatchProvider>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, padding: spacing.md, width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 64, padding: spacing.md, width: '100%', boxSizing: 'border-box' }}>
             <div style={{display: 'flex', flexDirection: 'column', gap: spacing.md}}>
-            <Header />
-            {/* Canvas zone */}
-            <div style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, borderRadius: `${borderRadius.lg}px ${borderRadius.lg}px 0 0`, background: colors.bg.canvas, overflow: 'hidden' }}>
-              <FMCanvas />
-            </div>
-            </div>
-            {/* Bottom panel */}
-            <div style={{ borderRadius: `0 0 ${borderRadius.lg}px ${borderRadius.lg}px`, background: colors.bg.panel, overflow: 'hidden' }}>
-              <GlobalControlPanel />
+              <Header />
+              <div style={{ display: 'flex', flexDirection: 'column', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', borderRadius: borderRadius.lg }}>
+                {/* Canvas zone */}
+                <div style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, borderRadius: `${borderRadius.lg}px ${borderRadius.lg}px 0 0`, background: colors.bg.canvas, overflow: 'hidden' }}>
+                  <FMCanvas />
+                </div>
+                {/* Bottom panel */}
+                <div style={{ borderRadius: `0 0 ${borderRadius.lg}px ${borderRadius.lg}px`, background: colors.bg.panel, overflow: 'hidden' }}>
+                  <GlobalControlPanel />
+                </div>
+              </div>
             </div>
             <Keyboard />
           </div>

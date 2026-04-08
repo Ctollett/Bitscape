@@ -14,9 +14,11 @@ interface PanelKnobProps {
   value: number;
   onChange: (value: number) => void;
   label: string;
+  color?: string;
+  trackColor?: string;
 }
 
-export function PanelKnob({ value, onChange, label }: PanelKnobProps) {
+export function PanelKnob({ value, onChange, label, color, trackColor }: PanelKnobProps) {
   const isDragging = useRef(false);
   const lastY = useRef(0);
   const [showValue, setShowValue] = useState(false);
@@ -54,22 +56,22 @@ export function PanelKnob({ value, onChange, label }: PanelKnobProps) {
       <svg width={SIZE} height={SIZE} style={{ cursor: 'ns-resize' }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
         {/* Track ring */}
         <circle
-          strokeWidth={2} fill='none' stroke={colors.control.indicator}
+          strokeWidth={2} fill='none' stroke={trackColor ?? colors.control.track}
           cx={CENTER} cy={CENTER} r={RADIUS}
         />
         {/* Value arc */}
         <circle style={{ pointerEvents: 'none' }}
           strokeDasharray={`${value * MAX_ARC} ${CIRCUMFERENCE}`}
           transform={`rotate(${START_DEG}, ${CENTER}, ${CENTER})`}
-          strokeWidth={2} strokeLinecap="round" fill="none" stroke={colors.bg.canvas}
+          strokeWidth={2} strokeLinecap="round" fill="none" stroke={color}
           cx={CENTER} cy={CENTER} r={RADIUS}
         />
         {/* Indicator line */}
-        <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors.bg.canvas} strokeWidth={2} strokeLinecap="round" />
+        <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={2} strokeLinecap="round" />
       </svg>
       <div style={{ display: 'grid' }}>
-        <span style={{ gridArea: '1/1', ...typography.label.sm, color: 'black', userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
-        <span style={{ gridArea: '1/1', ...typography.label.sm, color: 'black', userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0 }}>{Math.round(value * 100)}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: trackColor ?? colors.control.track, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: trackColor ?? colors.control.track, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0 }}>{Math.round(value * 100)}</span>
       </div>
     </div>
   );

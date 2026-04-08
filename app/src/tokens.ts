@@ -75,8 +75,9 @@ export const primitive = {
 export const colors = {
   bg: {
     app:    '#D8D3CA',
-    canvas: '#1F1E1C',
+    canvas: '#1C1A18',
     panel:  '#E8E3D9',
+    overlay: '#D8D2C4',
   },
   border: {
     default: primitive.neutral.gray100,
@@ -86,13 +87,14 @@ export const colors = {
   },
   text: {
     primary:   primitive.neutral.gray800,
-    secondary: primitive.neutral.gray500,
+    secondary: '#58595B',
     muted:     primitive.neutral.gray400,
     dim:       primitive.neutral.gray300,
     inverse:   primitive.neutral.white,
+    title:     '#2A2520',
   },
   control: {
-    track:     primitive.neutral.gray100,
+    track:     '#D4CEC4',
     handle:    primitive.neutral.white,
     indicator: primitive.neutral.gray400,
   },
@@ -103,6 +105,12 @@ export const colors = {
     modB2:    primitive.yellow[500],
     inactive: primitive.neutral.gray300,
     bg:       primitive.neutral.gray50,
+  },
+  section: {
+    adsr:   '#4E7AAA',
+    filter: '#5A7870',
+    lfo1:   '#B07080',
+    lfo2:   '#BF8C3A',
   },
   state: {
     hover:  'rgba(10, 9, 8, 0.05)',

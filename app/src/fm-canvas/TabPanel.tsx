@@ -22,7 +22,7 @@ export function TabPanel() {
   return (
    <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, boxSizing: 'border-box' }}>
       <div style={{ paddingLeft: 24, paddingRight: 24 }}>
-        <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color="blue" gap={spacing['2xl']} />
+        <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color={colors.text.primary} gap={spacing['2xl']} />
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 16 }}>
         {activeTab === 'filter'  && <FilterPanel/>}
