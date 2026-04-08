@@ -14,6 +14,7 @@ interface PanelSliderProps {
   value: number;
   onChange: (value: number) => void;
   label: string;
+  color?: string;
 }
 
 const circleSize = 14

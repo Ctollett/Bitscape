@@ -1,6 +1,8 @@
 import type { Point } from './types';
 import { useState, useEffect } from 'react';
 import {animate} from 'framer-motion'
+import { edgePoint } from './utils';
+
 interface ConnectionLineProps {
   src: Point;
   dst: Point;
@@ -9,13 +11,15 @@ interface ConnectionLineProps {
   srcOp: number;
   dstOp: number;
   color?: string;
+  srcColor: string;
+  dstColor: string;
   onRemove: () => void;
 }
 
-export function ConnectionLine({ src, dst, srcOffset, dstOffset, color, onRemove }: ConnectionLineProps) {
+export function ConnectionLine({ src, dst, color, srcColor, dstColor, onRemove }: ConnectionLineProps) {
 
-  const srcEdge = { x: src.x + srcOffset.x, y: src.y + srcOffset.y }
-  const dstEdge = { x: dst.x + dstOffset.x, y: dst.y + dstOffset.y }
+  const srcEdge = edgePoint(src, dst)
+  const dstEdge = edgePoint(dst, src)
 
 
   const dx = dstEdge.x - srcEdge.x
@@ -23,15 +27,18 @@ export function ConnectionLine({ src, dst, srcOffset, dstOffset, color, onRemove
 
   const dist = Math.sqrt(dx * dx + dy * dy)
 
-  const naturalLength = 250
+  const srcDot = { x: srcEdge.x + (dx / dist) * 5, y: srcEdge.y + (dy / dist) * 5 }
+  const dstDot = { x: dstEdge.x + (dx / dist) * -5, y: dstEdge.y + (dy / dist) * -5 }
+
+  const naturalLength = 350
 
   const slack = Math.max(0, naturalLength - dist)
 
-  let cp1x = srcEdge.x + (dstEdge.x - srcEdge.x) * 0.25
-  let cp1y = srcEdge.y + (dstEdge.y - srcEdge.y) * 0.25
+  let cp1x = srcDot.x + (dstDot.x - srcDot.x) * 0.25
+  let cp1y = srcDot.y + (dstDot.y - srcDot.y) * 0.25
 
-  let cp2x = dstEdge.x + (srcEdge.x - dstEdge.x) * 0.25
-  let cp2y = dstEdge.y + (srcEdge.y - dstEdge.y) * 0.25
+  let cp2x = dstDot.x + (srcDot.x - dstDot.x) * 0.25
+  let cp2y = dstDot.y + (srcDot.y - dstDot.y) * 0.25
 
 const [multiplier, setMultiplier] = useState(0)
 
@@ -57,14 +64,16 @@ useEffect(() => {
 
   return (
     <g>
-      <path d={`M ${srcEdge.x} ${srcEdge.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstEdge.x} ${dstEdge.y}`}
+      <path d={`M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`}
         fill="none" stroke={color || '#888'} strokeWidth={glowWidth} opacity={glowOpacity} strokeLinecap="round" />
-      <path d={`M ${srcEdge.x} ${srcEdge.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstEdge.x} ${dstEdge.y}`}
+      <path d={`M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`}
         fill="none" stroke={color || '#888'} strokeWidth={1.5} strokeLinecap="round" />
-     <path d={`M ${srcEdge.x} ${srcEdge.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstEdge.x} ${dstEdge.y}`}
+      <path d={`M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`}
         fill="none" stroke={'transparent'} strokeWidth={14} strokeLinecap="round"
         style={{ cursor: 'pointer', pointerEvents: 'stroke' }}
         onClick={(e) => { e.stopPropagation(); onRemove(); }} />
+      <circle cx={srcDot.x} cy={srcDot.y} r={5} fill={srcColor} />
+      <circle cx={dstDot.x} cy={dstDot.y} r={5} fill="var(--color-canvas-bg, #0a0a0a)" stroke={dstColor} strokeWidth={1.5} />
     </g>
   );
 }

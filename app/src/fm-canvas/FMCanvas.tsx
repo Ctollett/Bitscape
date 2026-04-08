@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { usePatch } from './patch-context';
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from './constants';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, OPERATOR_COLORS } from './constants';
 import { OperatorNode } from './OperatorNode';
 import { ConnectionLine } from './ConnectionLine';
 import { DraftConnection } from './DraftConnection';
@@ -21,6 +21,21 @@ const [selectedOp, setSelectedOp] = useState<number | null>(null)
 const [interaction, setInteraction] = useState<InteractionState>({ mode: 'idle', fromOp: null, mousePos: null})
 
 const canvasRef = useRef<HTMLDivElement>(null)
+const NATURAL_LENGTH = 350
+const velocitiesRef = useRef<Record<number, Point>>({})
+const rafRef = useRef<number>(0)
+const dragOpRef = useRef<number | null>(null)
+const dragPosRef = useRef<Point>({ x: 0, y: 0 })
+const patchRef = useRef(patch)
+const localPositionsRef = useRef<Record<number, Point>>({})
+const activeConnectedOpsRef = useRef<Set<number>>(new Set())
+
+patchRef.current = patch
+
+
+
+
+
 
 
 const onPointerMove = (e: React.PointerEvent) => {
@@ -35,11 +50,84 @@ const onPointerMove = (e: React.PointerEvent) => {
 }
 
 const onPointerUp = () => {
-if(interaction.mode === 'drawing-connection') {
-  setInteraction({ mode: 'idle', fromOp: null, mousePos: null })
+  if(interaction.mode === 'drawing-connection') {
+    setInteraction({ mode: 'idle', fromOp: null, mousePos: null })
+  }
+  dragOpRef.current = null
 }
 
+
+const runPhysics = () => {
+  const opIndex = dragOpRef.current
+  const pos = dragPosRef.current
+
+  for (const connectedOpIndex of activeConnectedOpsRef.current) {
+    const connectedPos = localPositionsRef.current[connectedOpIndex] ?? patchRef.current.operators[connectedOpIndex].position
+    const dx = pos?.x - connectedPos.x
+    const dy = pos?.y - connectedPos.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    const vel = velocitiesRef.current[connectedOpIndex] ?? { x: 0, y: 0 }
+
+
+    if( opIndex !== null && dist >= NATURAL_LENGTH ) {
+    const force = (dist - NATURAL_LENGTH) * 0.004
+    vel.x += (dx / dist) * force 
+    vel.y += (dy / dist) * force
+
+    }
+
+    console.log("velocities",velocitiesRef.current)
+
+    vel.x *= 0.88
+    vel.y *= 0.88
+    velocitiesRef.current[connectedOpIndex] = vel
+
+      const newPosition = {
+      x: connectedPos.x + vel.x,
+      y: connectedPos.y + vel.y
+  }
+
+localPositionsRef.current[connectedOpIndex] = newPosition
+    dispatch({ type: 'MOVE_OPERATOR', opIndex: connectedOpIndex, position: newPosition })
+
 }
+
+for (const idx of activeConnectedOpsRef.current) {
+  const vel = velocitiesRef.current[idx]
+
+if (Math.abs(vel.x) < 0.005 && Math.abs(vel.y) < 0.005) {
+  cancelAnimationFrame(rafRef.current)
+  rafRef.current = 0
+  activeConnectedOpsRef.current.clear()
+  return
+}
+}
+
+rafRef.current = requestAnimationFrame(runPhysics)
+
+}
+
+
+
+const handleStringTension = (opIndex: number, pos: Point) => {
+  activeConnectedOpsRef.current.clear()
+  localPositionsRef.current = {}
+    
+  for(let i = 0; i < patchRef.current.connections.length; i++) {
+    const connectedOp = patchRef.current.connections[i]
+    if(connectedOp.src !== opIndex && connectedOp.dst !== opIndex) continue
+    const connectedOpIndex = connectedOp.src === opIndex ? connectedOp.dst : connectedOp.src
+    activeConnectedOpsRef.current.add(connectedOpIndex)
+    } 
+    dragOpRef.current = opIndex
+    dragPosRef.current = pos
+
+      if (!rafRef.current) { rafRef.current = requestAnimationFrame(runPhysics) }
+  }
+
+
+
 
 
   return (
@@ -55,8 +143,11 @@ if(interaction.mode === 'drawing-connection') {
     <svg style={{position: 'absolute', top: 0, left: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, pointerEvents: 'none'}}>
 
       {patch.connections.map((conn) => (
-        <ConnectionLine  srcOffset={conn.srcOffset} dstOffset={conn.dstOffset} src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
-      dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst} onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
+        <ConnectionLine srcOffset={conn.srcOffset} dstOffset={conn.dstOffset} src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
+      dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst}
+      srcColor={OPERATOR_COLORS[conn.src]}
+      dstColor={OPERATOR_COLORS[conn.dst]}
+      onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
       ))}
       {interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.mousePos && (
   <DraftConnection from={patch.operators[interaction.fromOp].position} to={interaction.mousePos} />
@@ -69,6 +160,7 @@ if(interaction.mode === 'drawing-connection') {
       key={`op-${i}`}
       opIndex={i}
       isCarrier={false}
+      onDragMove={handleStringTension}
       onStartConnection={(opIndex) => setInteraction({ mode: 'drawing-connection', fromOp: opIndex, mousePos: null })}
       onEndConnection={(targetOp) => {
   if (interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.fromOp !== targetOp) {

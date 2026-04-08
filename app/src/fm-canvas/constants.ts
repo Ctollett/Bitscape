@@ -3,7 +3,8 @@ import { colors } from '../tokens';
 
 export const CANVAS_WIDTH  = 1200;
 export const CANVAS_HEIGHT = 720;
-export const NODE_RADIUS = 40;
+export const NODE_RADIUS = 59;
+export const RING_RADIUS = 77;
 export const PANEL_WIDTH = 280;
 
 /** Inner zone fraction — inside this radius = drag to move, outside = drag to connect */

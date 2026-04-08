@@ -1,11 +1,16 @@
 import { usePatch } from './patch-context';
-import { useRef, useCallback} from 'react';
+import { useRef, useCallback } from 'react';
+
 import {
   NODE_RADIUS,
+  RING_RADIUS,
   OPERATOR_COLORS,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
 } from './constants';
+
+import type { Point } from './types'
+
 
 const WAVE_W = 50;
 const WAVE_H = 30;
@@ -38,6 +43,7 @@ interface OperatorNodeProps {
   onOpenDetail: (opIndex: number) => void;
   onSelect: (opIndex: number) => void;
   isSelected: boolean;
+  onDragMove?: (opIndex: number, pos: Point) => void; 
 }
 
 export function OperatorNode({
@@ -48,9 +54,11 @@ export function OperatorNode({
   onOpenDetail: _onOpenDetail,
   onSelect,
   isSelected,
+  onDragMove
 }: OperatorNodeProps) {
   const { patch, dispatch } = usePatch();
   const op = patch.operators[opIndex];
+
   const nodeRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
@@ -106,8 +114,12 @@ export function OperatorNode({
     const pointerY = e.clientY - canvas.top;
     const newPos = { x: Math.max(NODE_RADIUS, Math.min(CANVAS_WIDTH - NODE_RADIUS, pointerX - dragStartRef.current.x)), y: Math.max(NODE_RADIUS, Math.min(CANVAS_HEIGHT - NODE_RADIUS, pointerY - dragStartRef.current.y) )}
     pendingPos.current = newPos;
+    onDragMove?.(opIndex, newPos)
+    
     if (!rafRef.current) {
-  rafRef.current = requestAnimationFrame(flushPosition)
+    rafRef.current = requestAnimationFrame(flushPosition)
+
+
 }
   }
 
@@ -126,15 +138,18 @@ const onPointerUp = (e: React.PointerEvent) => {
 
   return (
   <>
-  {isSelected && (
-<div onPointerDown={onPointerDownRing} style={{cursor: 'pointer', position: 'absolute', border: '2px solid white', width: NODE_RADIUS * 2.6, height: NODE_RADIUS * 2.6, left: op.position.x - NODE_RADIUS * 1.3, top: op.position.y - NODE_RADIUS * 1.3, borderRadius: '50%'}}></div>
-  )}
+  {(() => {
+    const isConnected = patch.connections.some(c => c.src === opIndex || c.dst === opIndex)
+    return (isSelected || isConnected) ? (
+      <div onPointerDown={onPointerDownRing} style={{cursor: 'pointer', position: 'absolute', border: `2px solid ${OPERATOR_COLORS[opIndex]}`, width: RING_RADIUS * 2, height: RING_RADIUS * 2, left: op.position.x - RING_RADIUS, top: op.position.y - RING_RADIUS, borderRadius: '50%'}}></div>
+    ) : null
+  })()}
     <div ref={nodeRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} className='operator-node' style={{ cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: op.position.x - NODE_RADIUS, top: op.position.y - NODE_RADIUS, width: NODE_RADIUS * 2, height: NODE_RADIUS * 2, borderRadius: '50%', border: `1px solid ${OPERATOR_COLORS[opIndex]}`
 }}>
     <svg width={WAVE_W} height={WAVE_H} viewBox={`0 0 ${WAVE_W} ${WAVE_H}`} style={{ pointerEvents: 'none' }}>
       <path d={waveformPath(patch.operatorWaveforms[opIndex])} fill="none" stroke={OPERATOR_COLORS[opIndex]} strokeWidth={2} />
     </svg>
-      
+
     </div>
 </>
  
