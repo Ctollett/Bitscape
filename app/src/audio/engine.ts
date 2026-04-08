@@ -1,5 +1,7 @@
 let audioCtx: AudioContext | null = null;
 let workletNode: AudioWorkletNode | null = null;
+let analyserL: AnalyserNode | null = null;
+let analyserR: AnalyserNode | null = null;
 let ready = false;
 
 export async function initAudio(): Promise<void> {
@@ -22,6 +24,21 @@ export async function initAudio(): Promise<void> {
     outputChannelCount: [2],
     processorOptions: { wasmModule, sampleRate: audioCtx.sampleRate },
   });
+
+  const splitter = audioCtx.createChannelSplitter(2);
+  const mergerL = audioCtx.createChannelMerger(1);
+  const mergerR = audioCtx.createChannelMerger(1);
+
+  analyserL = audioCtx.createAnalyser();
+  analyserR = audioCtx.createAnalyser();
+  analyserL.fftSize = 256;
+  analyserR.fftSize = 256;
+
+  workletNode.connect(splitter);
+  splitter.connect(mergerL, 0, 0);
+  splitter.connect(mergerR, 1, 0);
+  mergerL.connect(analyserL);
+  mergerR.connect(analyserR);
 
   workletNode.connect(audioCtx.destination);
 
@@ -87,4 +104,23 @@ export function setParam(fn: string, ...args: (number | boolean | Uint32Array)[]
 
 export function isReady(): boolean {
   return ready;
+}
+
+/** Returns RMS levels for L and R channels, each in range [0, 1]. */
+export function getLevels(): { l: number; r: number } {
+  if (!analyserL || !analyserR) return { l: 0, r: 0 };
+
+  const buf = new Float32Array(analyserL.fftSize);
+
+  analyserL.getFloatTimeDomainData(buf);
+  let sumL = 0;
+  for (let i = 0; i < buf.length; i++) sumL += buf[i] * buf[i];
+  const l = Math.sqrt(sumL / buf.length);
+
+  analyserR.getFloatTimeDomainData(buf);
+  let sumR = 0;
+  for (let i = 0; i < buf.length; i++) sumR += buf[i] * buf[i];
+  const r = Math.sqrt(sumR / buf.length);
+
+  return { l, r };
 }
