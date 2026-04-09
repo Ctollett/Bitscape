@@ -1,8 +1,18 @@
+import { useState } from 'react'
 import LeftArrow from '../assets/svgs/left-arrow.svg?react';
 import RightArrow from '../assets/svgs/right-arrow.svg?react';
 import { spacing, typography, colors, borderRadius } from '../tokens';
+import { usePatch } from '../fm-canvas/patch-context';
+import { loadLibrary } from '../fm-canvas/patch-storage';
 
 export function PresetSelect() {
+
+  const { patch, dispatch } = usePatch()
+  const [presetIndex, setPresetIndex] = useState<number>(0)
+  const [isEditing, setIsEditing] = useState(false)
+  const [presets, setPresets] = useState(() => loadLibrary())
+  
+
   return (
     <div style={{ gridRow: '1 / 3', display: 'grid', gridTemplateRows: 'subgrid', alignItems: 'center', justifyItems: 'center' }}>
       {/* Row 1: pill */}
