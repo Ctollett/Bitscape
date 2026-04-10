@@ -25,13 +25,13 @@ export const loadLibrary = (): SavedPatch[] => {
 }
 
 
-export const saveToLibrary = (name: string, patch: FMCanvasPatch): SavedPatch => {
+export const saveToLibrary = (name: string, patch: FMCanvasPatch, category: string): SavedPatch => {
     const library = loadLibrary();
 
     const entry: SavedPatch = {
         id: crypto.randomUUID(),
         name: name,
-        category: '',
+        category: category,
         createdAt: Date.now(),
         patch: patch,
     }

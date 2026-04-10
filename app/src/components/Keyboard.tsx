@@ -108,6 +108,9 @@ export default function Keyboard() {
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+        const activeEl = document.activeElement;
+    const isActiveInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+       if(isActiveInput) return
       if (e.repeat) return;
       const note = keyMapRef.current[e.key];
       if (note !== undefined) { e.preventDefault(); handleNoteOn(note); }
@@ -116,12 +119,15 @@ export default function Keyboard() {
       const note = keyMapRef.current[e.key];
       if (note !== undefined) { e.preventDefault(); handleNoteOff(note); }
     };
+
+
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
     return () => {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
+  
   }, [handleNoteOn, handleNoteOff]);
 
   // Note → keyboard label lookup

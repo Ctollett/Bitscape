@@ -33,11 +33,6 @@ const activeConnectedOpsRef = useRef<Set<number>>(new Set())
 patchRef.current = patch
 
 
-
-
-
-
-
 const onPointerMove = (e: React.PointerEvent) => {
 
   if(interaction.mode === 'drawing-connection') {
