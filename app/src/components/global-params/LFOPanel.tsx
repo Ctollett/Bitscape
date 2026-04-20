@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { usePatch } from '../../fm-canvas/patch-context';
+import {LFOPanelSliders} from './LFOPanelSliders'
+import { LFOWave } from './LFOWave';
 
 // Ordered to match LfoDestination enum in lfo.rs
 const DESTINATIONS: { value: number; label: string; group: string }[] = [
@@ -126,54 +128,19 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '24px', padding: '12px 24px' }}>
 
-      {/* Speed */}
+      {/* Speed + Depth */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Speed</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>{speed.toFixed(2)}Hz</span>
-        </div>
-        <input type="range" min={0.01} max={20} step={0.01}
-          value={speed}
-          onChange={e => update({ speed: Number(e.target.value) })}
-          style={{ width: '100%', accentColor: '#4a9eff' }}
-        />
-      </div>
-
-      {/* Depth */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Depth</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>{Math.round(depth * 100)}%</span>
-        </div>
-        <input type="range" min={0} max={1} step={0.01}
-          value={depth}
-          onChange={e => update({ depth: Number(e.target.value) })}
-          style={{ width: '100%', accentColor: '#4a9eff' }}
+        <LFOPanelSliders
+          speed={speed}
+          depth={depth}
+          onSpeedChange={(v) => update({ speed: v })}
+          onDepthChange={(v) => update({ depth: v })}
         />
       </div>
 
       {/* Waveform */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Wave</span>
-        <div style={{ display: 'flex', gap: '3px' }}>
-          {WAVEFORMS.map(w => (
-            <button
-              key={w.value}
-              title={w.title}
-              onClick={() => update({ waveform: w.value })}
-              style={{
-                width: '28px', height: '28px',
-                background: waveform === w.value ? '#4a9eff' : 'transparent',
-                border: '1px solid', borderColor: waveform === w.value ? '#4a9eff' : '#333',
-                borderRadius: '4px', cursor: 'pointer',
-                color: waveform === w.value ? '#fff' : '#555',
-                fontSize: '13px',
-              }}
-            >
-              {w.label}
-            </button>
-          ))}
-        </div>
+      <LFOWave speed={speed} depth={depth} waveform={waveform} onWaveformChange={(v) => update({waveform: v})}/>
       </div>
 
       {/* Mode */}
