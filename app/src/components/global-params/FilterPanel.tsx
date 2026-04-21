@@ -2,7 +2,8 @@ import { usePatch } from "../../fm-canvas/patch-context";
 import { VerticalSlider } from "../VerticalSlider";
 import { FilterShape } from "../FilterShape";
 import type { FilterType } from "../FilterShape";
-import { colors, typography, panel, spacing } from "../../tokens";
+import { colors, panel, spacing } from "../../tokens";
+import { TabSelect } from "../TabSelect";
 
 const FILTER_TYPES = [
   { value: 0, label: 'LP', id: 'lp' as FilterType },
@@ -28,26 +29,11 @@ export function FilterPanel() {
 
       {/* Type toggle + filter curve */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm, alignSelf: 'center' }}>
-        <div style={{ display: 'flex', gap: spacing.md }}>
-          {FILTER_TYPES.map(ft => {
-            const isActive = patch.filterType === ft.value;
-            return (
-              <span
-                key={ft.value}
-                onClick={() => dispatch({ type: 'SET_FILTER_TYPE', value: ft.value })}
-                style={{
-                  ...typography.label.sm,
-                  color: isActive ? colors.text.primary : colors.text.muted,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                }}
-              >
-                {ft.label}
-              </span>
-            );
-          })}
-        </div>
+        <TabSelect
+          options={FILTER_TYPES}
+          value={patch.filterType}
+          onChange={(v) => dispatch({ type: 'SET_FILTER_TYPE', value: v })}
+        />
         <FilterShape
           type={filterType}
           cutoff={patch.filterCutoff / 127}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePatch } from '../../fm-canvas/patch-context';
 import {LFOPanelSliders} from './LFOPanelSliders'
 import { LFOWave } from './LFOWave';
+import { TabSelect } from '../TabSelect';
 
 // Ordered to match LfoDestination enum in lfo.rs
 const DESTINATIONS: { value: number; label: string; group: string }[] = [
@@ -146,24 +147,7 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
       {/* Mode */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Mode</span>
-        <div style={{ display: 'flex', gap: '3px' }}>
-          {MODES.map(m => (
-            <button
-              key={m.value}
-              onClick={() => update({ mode: m.value })}
-              style={{
-                padding: '4px 8px',
-                background: mode === m.value ? '#4a9eff' : 'transparent',
-                border: '1px solid', borderColor: mode === m.value ? '#4a9eff' : '#333',
-                borderRadius: '4px', cursor: 'pointer',
-                color: mode === m.value ? '#fff' : '#555',
-                fontSize: '10px', fontWeight: 600,
-              }}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
+        <TabSelect options={MODES} value={mode} onChange={(v) => update({ mode: v })} />
       </div>
 
       {/* Destination */}
