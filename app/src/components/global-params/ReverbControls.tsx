@@ -1,4 +1,3 @@
-import { PanelSlider } from '../PanelSlider';
 import { usePatch } from '../../fm-canvas/patch-context';
 import { HorizontalSlider } from '../HorizontalSlider';
 
@@ -18,9 +17,9 @@ export function ReverbControls() {
 
   return (
     <div style={{display: 'flex', gap: 16, width: 86, height: 140, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-       <HorizontalSlider value={patch.reverbDecay} onChange={(v) => update({ decay: v })} label="decay" />
-       <HorizontalSlider value={patch.reverbDamping} onChange={(v) => update({ damping: v })} label="damping" />
-       <HorizontalSlider value={patch.reverbMix} onChange={(v) => update({ mix: v })} label="mix" />
+       <HorizontalSlider width={120} value={patch.reverbDecay} onChange={(v) => update({ decay: v })} label="decay" />
+       <HorizontalSlider width={120} value={patch.reverbDamping} onChange={(v) => update({ damping: v })} label="damping" />
+       <HorizontalSlider width={120} value={patch.reverbMix} onChange={(v) => update({ mix: v })} label="mix" />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Repeat2, PowerOff, Power } from 'lucide-react';
-import { spacing } from '../../tokens';
+import { Repeat2, Power, PowerOff } from 'lucide-react';
+import { colors, typography } from '../../tokens';
 import { EffectCardFront } from './EffectCardFront';
 import { EffectCardBack } from './EffectCardBack';
 
@@ -11,20 +11,23 @@ interface EffectCardProps {
   children: React.ReactNode;
   enabled: boolean;
   onToggle: () => void;
-  index: number;
 }
 
-export function EffectCard({ label, design, children, enabled, onToggle, index }: EffectCardProps) {
+export function EffectCard({ label, design, children, enabled, onToggle }: EffectCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const handleFlip = () => setIsFlipped(f => !f);
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '224px', height: '100%', borderTop: '1px solid black', borderRight: index < 3 ? '1px solid black' : 'none', justifyContent: 'flex-start', gap: spacing['2xl'] }}>
-      <div style={{ display: 'flex', width: '100%', height: '36px', justifyContent: 'space-between', padding: '12px' }}>
-        <button onClick={handleFlip} style={{ display: 'flex', height: '100px', border: 'none', backgroundColor: 'transparent' }}><Repeat2 /></button>
-        <span style={{ color: 'black' }}>{label}</span>
-        <button onClick={onToggle} style={{ display: 'flex', height: '100px', border: 'none', backgroundColor: 'transparent' }}>{enabled ? <Power /> : <PowerOff />}</button>
+    <div style={{ display: 'flex', flexDirection: 'column', width: 150, gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ ...typography.label.sm, color: colors.text.muted }}>{label}</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={() => setIsFlipped(f => !f)} style={{ display: 'flex', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, color: colors.text.muted }}>
+            <Repeat2 size={12} />
+          </button>
+          <button onClick={onToggle} style={{ display: 'flex', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, color: enabled ? colors.text.primary : colors.text.muted }}>
+            {enabled ? <Power size={12} /> : <PowerOff size={12} />}
+          </button>
+        </div>
       </div>
       <AnimatePresence mode="wait">
         <motion.div key={isFlipped ? 'back' : 'front'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>

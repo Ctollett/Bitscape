@@ -1,13 +1,16 @@
-import { OptionMenu } from './WaveMenu';
 import { FilterShape } from '../components/FilterShape';
 import type { FilterType } from '../components/FilterShape';
-import { colors } from '../tokens';
+import { TabSelect } from '../components/TabSelect';
+import { PanelGroup } from '../components/PanelGroup';
 
-const FILTER_OPTIONS: { id: FilterType; label: string }[] = [
-  { id: 'lp', label: 'LP' },
-  { id: 'hp', label: 'HP' },
-  { id: 'bp', label: 'BP' },
+const FILTER_TYPES = [
+  { value: 0, label: 'LP' },
+  { value: 1, label: 'HP' },
+  { value: 2, label: 'BP' },
 ];
+
+const TYPE_TO_NUM: Record<FilterType, number> = { lp: 0, hp: 1, bp: 2 };
+const NUM_TO_TYPE: FilterType[] = ['lp', 'hp', 'bp'];
 
 interface FilterSelectProps {
   type: FilterType;
@@ -20,9 +23,13 @@ interface FilterSelectProps {
 
 export function FilterSelect({ type, cutoff, resonance, onTypeChange, onCutoffChange, onResonanceChange }: FilterSelectProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <OptionMenu options={FILTER_OPTIONS} value={type} onChange={onTypeChange} color={colors.section.filter} />
+    <PanelGroup>
+      <TabSelect
+        options={FILTER_TYPES}
+        value={TYPE_TO_NUM[type]}
+        onChange={(v) => onTypeChange(NUM_TO_TYPE[v])}
+      />
       <FilterShape type={type} cutoff={cutoff} resonance={resonance} onCutOffChange={onCutoffChange} onResonanceChange={onResonanceChange} />
-    </div>
+    </PanelGroup>
   );
 }

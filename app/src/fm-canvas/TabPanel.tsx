@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { typography, colors, spacing } from '../tokens';
+import { colors, spacing } from '../tokens';
 import { OptionMenu } from '../fm-canvas/WaveMenu'
 import { FilterPanel } from './FilterPanel';
 import { EffectsPanel } from '../components/global-params/EffectsPanel';
@@ -20,11 +20,11 @@ export function TabPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('filter')
 
   return (
-   <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 24, boxSizing: 'border-box' }}>
-      <div style={{ paddingLeft: 24, paddingRight: 24 }}>
+   <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+      <div style={{ paddingLeft: 24, paddingRight: 24, paddingTop: 24 }}>
         <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color={colors.text.primary} gap={spacing['2xl']} />
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 16 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: 24, paddingLeft: 64, paddingRight: 64 }}>
         {activeTab === 'filter'  && <FilterPanel/>}
         {activeTab === 'effects' && <EffectsPanel/>}
         {activeTab === 'lfo1'   && <LFO1Panel/>}

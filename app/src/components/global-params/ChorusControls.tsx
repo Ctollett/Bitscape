@@ -19,10 +19,10 @@ export function ChorusControls() {
 
   return (
     <div style={{ display: 'flex', gap: 16, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-      <HorizontalSlider value={patch.chorusDepth} onChange={(v) => update({ depth: v })} label="depth" />
-      <HorizontalSlider value={(patch.chorusSpeed - 0.1) / 9.9} onChange={(v) => update({ speed: v * 9.9 + 0.1 })} label="speed" />
-      <HorizontalSlider value={patch.chorusWidth} onChange={(v) => update({ width: v })} label="width" />
-      <HorizontalSlider value={patch.chorusReverbSend} onChange={(v) => update({ reverbSend: v })} label="reverb" />
+      <HorizontalSlider width={120} value={patch.chorusDepth} onChange={(v) => update({ depth: v })} label="depth" />
+      <HorizontalSlider width={120} value={(patch.chorusSpeed - 0.1) / 9.9} onChange={(v) => update({ speed: v * 9.9 + 0.1 })} label="speed" />
+      <HorizontalSlider width={120} value={patch.chorusWidth} onChange={(v) => update({ width: v })} label="width" />
+      <HorizontalSlider width={120} value={patch.chorusReverbSend} onChange={(v) => update({ reverbSend: v })} label="reverb" />
     </div>
   );
 }

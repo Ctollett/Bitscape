@@ -13,7 +13,7 @@ interface FilterShapeProps {
 }
 
 const W = 280
-const H = 160
+const H = 152
 const PAD_L = 8
 const PAD_R = 8
 const PAD_T = 12

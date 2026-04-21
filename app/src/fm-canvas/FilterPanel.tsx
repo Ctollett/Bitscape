@@ -3,7 +3,8 @@ import { FilterSelect } from './FilterSelect';
 import { FilterEnvSliders } from './FilterEnvSliders';
 import { FilterKnobs } from './FilterKnobs';
 import type { FilterType } from '../components/FilterShape';
-import { colors, panel } from '../tokens';
+import { colors } from '../tokens';
+import { Panel } from '../components/Panel';
 
 const TYPE_TO_NUM: Record<FilterType, number> = { lp: 0, hp: 1, bp: 2 };
 const NUM_TO_TYPE: FilterType[] = ['lp', 'hp', 'bp'];
@@ -12,7 +13,7 @@ export function FilterPanel() {
   const { patch, dispatch } = usePatch();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '748px', alignItems: 'flex-end', gap: panel.gap.control }}>
+    <Panel spread>
       <FilterSelect
         type={NUM_TO_TYPE[patch.filterType] ?? 'lp'}
         cutoff={patch.filterCutoff / 127}
@@ -25,6 +26,6 @@ export function FilterPanel() {
       <FilterEnvSliders />
       <div style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border.subtle }} />
       <FilterKnobs />
-    </div>
+    </Panel>
   );
 }

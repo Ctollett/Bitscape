@@ -16,9 +16,9 @@ export function DelayControls() {
 
   return (
     <div style={{ display: 'flex', gap: 16, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-      <HorizontalSlider value={patch.delayMs / 1000} onChange={(v) => update({ ms: v * 1000 })} label="time" />
-      <HorizontalSlider value={patch.delayFeedback / 0.99} onChange={(v) => update({ feedback: v * 0.99 })} label="feedback" />
-      <HorizontalSlider value={patch.delayMix} onChange={(v) => update({ mix: v })} label="mix" />
+      <HorizontalSlider width={120} value={patch.delayMs / 1000} onChange={(v) => update({ ms: v * 1000 })} label="time" />
+      <HorizontalSlider width={120} value={patch.delayFeedback / 0.99} onChange={(v) => update({ feedback: v * 0.99 })} label="feedback" />
+      <HorizontalSlider width={120} value={patch.delayMix} onChange={(v) => update({ mix: v })} label="mix" />
     </div>
   );
 }

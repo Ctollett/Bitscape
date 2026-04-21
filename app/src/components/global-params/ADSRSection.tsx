@@ -25,7 +25,7 @@ export function ADSRSection() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', paddingTop: 24, paddingBottom: 24, paddingLeft: 24, paddingRight: 24, boxSizing: 'border-box' }}>
         <span style={{ ...typography.label.lg, lineHeight: 1, color: colors.text.muted, alignSelf: 'flex-start' }}>ADSR</span>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 32, paddingTop: 16 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 32, paddingTop: 16 }}>
       <PanelSlider color={colors.section.adsr} value={patch.ampAttack / 127} onChange={(v) => setEnv({ attack: v * 127 })} label="A" />
       <PanelSlider color={colors.section.adsr}  value={patch.ampDecay / 127} onChange={(v) => setEnv({ decay: v * 127 })} label="D" />
       <PanelSlider color={colors.section.adsr}  value={patch.ampSustain / 127} onChange={(v) => setEnv({ sustain: v * 127 })} label="S" />

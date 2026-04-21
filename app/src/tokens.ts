@@ -178,7 +178,7 @@ export const borderRadius = {
 export const panel = {
   padding: {
     x: 24,  // horizontal padding inside a panel
-    y: 16,  // vertical padding inside a panel
+    y: 24,  // vertical padding inside a panel
   },
   gap: {
     control: 24,  // gap between controls within a panel

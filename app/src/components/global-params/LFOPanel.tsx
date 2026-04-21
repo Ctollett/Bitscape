@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { usePatch } from '../../fm-canvas/patch-context';
-import {LFOPanelSliders} from './LFOPanelSliders'
+import { LFOSliders } from './LFOSliders';
 import { LFOWave } from './LFOWave';
 import { TabSelect } from '../TabSelect';
+import { Panel } from '../Panel';
+import { PanelKnob } from '../PanelKnob';
+import { PanelGroup } from '../PanelGroup';
+import { colors } from '../../tokens';
 
 // Ordered to match LfoDestination enum in lfo.rs
 const DESTINATIONS: { value: number; label: string; group: string }[] = [
@@ -127,32 +131,26 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
 
   // ── Normal panel ──────────────────────────────────────────────────────────
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', gap: '24px', padding: '12px 24px' }}>
+    <Panel spread>
 
-      {/* Speed + Depth */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-        <LFOPanelSliders
-          speed={speed}
-          depth={depth}
-          onSpeedChange={(v) => update({ speed: v })}
-          onDepthChange={(v) => update({ depth: v })}
-        />
-      </div>
-
-      {/* Waveform */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <LFOWave speed={speed} depth={depth} waveform={waveform} onWaveformChange={(v) => update({waveform: v})}/>
-      </div>
-
-      {/* Mode */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Mode</span>
+      {/* Mode tabs + Wave */}
+      <PanelGroup gap={20}>
         <TabSelect options={MODES} value={mode} onChange={(v) => update({ mode: v })} />
-      </div>
+        <LFOWave speed={speed} depth={depth} waveform={waveform} color={lfoIndex === 1 ? colors.section.lfo1 : colors.section.lfo2} onWaveformChange={(v) => update({ waveform: v })} />
+      </PanelGroup>
+
+      {/* Speed + Depth sliders */}
+      <LFOSliders
+        speed={speed}
+        depth={depth}
+        lfoIndex={lfoIndex}
+        onSpeedChange={(v) => update({ speed: v })}
+        onDepthChange={(v) => update({ depth: v })}
+      />
 
       {/* Destination */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Dest</span>
+      <PanelGroup>
+        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Destination</span>
         <button
           onClick={() => setAssigning(true)}
           style={{
@@ -169,34 +167,15 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
         >
           {activeDest ? activeDest.label : 'None'} ›
         </button>
+      </PanelGroup>
+
+      {/* Mult + Fade knobs */}
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+        <PanelKnob color={lfoIndex === 1 ? colors.section.lfo1 : colors.section.lfo2} label="Mult" value={(multiplier - 1) / 7} onChange={(v) => update({ multiplier: Math.round(v * 7) + 1 })} />
+        <PanelKnob color={lfoIndex === 1 ? colors.section.lfo1 : colors.section.lfo2} label="Fade" value={(fade + 64) / 127} onChange={(v) => update({ fade: Math.round(v * 127) - 64 })} />
       </div>
 
-      {/* Multiplier */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Mult</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>×{multiplier}</span>
-        </div>
-        <input type="range" min={1} max={8} step={1}
-          value={multiplier}
-          onChange={e => update({ multiplier: Number(e.target.value) })}
-          style={{ width: '80px', accentColor: '#4a9eff' }}
-        />
-      </div>
 
-      {/* Fade */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Fade</span>
-          <span style={{ fontSize: '10px', color: '#4a9eff' }}>{fade}</span>
-        </div>
-        <input type="range" min={-64} max={63} step={1}
-          value={fade}
-          onChange={e => update({ fade: Number(e.target.value) })}
-          style={{ width: '80px', accentColor: '#4a9eff' }}
-        />
-      </div>
-
-    </div>
+    </Panel>
   );
 }
