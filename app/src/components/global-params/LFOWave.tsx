@@ -53,9 +53,10 @@ export function LFOWave ({speed, depth, waveform, onWaveformChange}: LFOWaveProp
 
 
     function handleWaveSlider (v: number) {
+    const stepValue =  v / 3
     setSliderPos(v)
-    sliderPosRef.current = v
-    onWaveformChange(Math.round(v * 3))
+    sliderPosRef.current = stepValue
+    onWaveformChange(v)
 
 }
 
@@ -79,7 +80,7 @@ export function LFOWave ({speed, depth, waveform, onWaveformChange}: LFOWaveProp
             <svg ref={svgRef} width={W} height={H}>
                 <path fill="none" stroke="black" strokeWidth={'2px'} ref={pathRef}></path>
             </svg>
-            <HorizontalSlider value={sliderPos} onChange={handleWaveSlider} label="Wave Type" />
+            <HorizontalSlider value={sliderPos} steps={4} onChange={handleWaveSlider} labels={['sine', 'triangle', 'saw', 'square']} />
         </div>
 
     )
