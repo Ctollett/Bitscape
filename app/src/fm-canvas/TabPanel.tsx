@@ -24,7 +24,7 @@ export function TabPanel() {
       <div style={{ paddingLeft: 24, paddingRight: 24, paddingTop: 24 }}>
         <OptionMenu options={TABS} value={activeTab} onChange={setActiveTab} color={colors.text.primary} gap={spacing['2xl']} />
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: 24, paddingLeft: 64, paddingRight: 64 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: 24, paddingLeft: activeTab === 'effects' ? 48 : 72, paddingRight: activeTab === 'effects' ? 48 : 72 }}>
         {activeTab === 'filter'  && <FilterPanel/>}
         {activeTab === 'effects' && <EffectsPanel/>}
         {activeTab === 'lfo1'   && <LFO1Panel/>}

@@ -160,7 +160,7 @@ export function DelayDesign() {
   }, []);
 
   return (
-    <svg ref={svgRef} width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg ref={svgRef} width="100" height="100" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx={CX} cy={CY} r={OUTER_R} stroke="#4E7AAA" strokeWidth={2} fill="none" />
       {RING_RADII.map((r, i) => (
         <circle key={i} ref={el => { if (el) ringEls.current[i] = el; }} cx={CX} cy={CY} r={r} stroke="#4E7AAA" strokeWidth={1} fill="none" opacity={0} />

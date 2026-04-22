@@ -147,7 +147,7 @@ export function ReverbDesign() {
   }, []);
 
   return (
-    <svg ref={svgRef} width="70" height="84" viewBox="0 0 70 84" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+    <svg ref={svgRef} width="84" height="100" viewBox="0 0 70 84" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
       <g ref={el => { staticEls.current[0] = el; }}>
         <ellipse cx={CX_CENTER - 7} cy={CY} rx={BASE_RX} ry={BASE_RY} stroke="#D94F2B" strokeWidth={2} fill="none" />
       </g>

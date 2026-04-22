@@ -58,7 +58,7 @@ export function ChorusDesign() {
   }, []);
 
   return (
-    <svg width="90" height="89" viewBox="0 0 90 89" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
+    <svg width="108" height="107" viewBox="0 0 90 89" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
       <g ref={mainRef}>
         {COPIES.map(n => <path key={n} d={MAIN_D} {...STROKE} transform={`translate(${n*STEP_X},${-n*STEP_Y})`} />)}
       </g>
