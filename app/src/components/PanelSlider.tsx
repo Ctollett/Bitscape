@@ -56,8 +56,8 @@ const onPointerUp = () => {
      </motion.div>    
       </div>
       <div style={{ display: 'grid', placeItems: 'center', minWidth: '24px', width: 'fit-content' }}>
-        <span style={{ gridArea: '1/1', ...typography.label.sm, color: colors.control.track, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
-        <span style={{ gridArea: '1/1', ...typography.label.sm, color: colors.control.track, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0, fontVariantNumeric: 'tabular-nums', minWidth: '2ch' }}>{Math.round(value * 100)}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: colors.text.muted, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: colors.text.muted, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0, fontVariantNumeric: 'tabular-nums', minWidth: '2ch' }}>{Math.round(value * 100)}</span>
       </div>
     </div>
   );

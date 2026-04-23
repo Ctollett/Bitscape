@@ -3,8 +3,7 @@ import { colors, spacing } from '../tokens';
 import { OptionMenu } from '../fm-canvas/WaveMenu'
 import { FilterPanel } from './FilterPanel';
 import { EffectsPanel } from '../components/global-params/EffectsPanel';
-import { LFO1Panel } from '../components/global-params/LFO1Panel';
-import { LFO2Panel } from '../components/global-params/LFO2Panel';
+import { LFOPanel } from '../components/global-params/LFOPanel';
 
 type Tab = 'filter' | 'effects' | 'lfo1' | 'lfo2';
 
@@ -27,8 +26,8 @@ export function TabPanel() {
       <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', paddingBottom: 24, paddingLeft: activeTab === 'effects' ? 48 : 72, paddingRight: activeTab === 'effects' ? 48 : 72 }}>
         {activeTab === 'filter'  && <FilterPanel/>}
         {activeTab === 'effects' && <EffectsPanel/>}
-        {activeTab === 'lfo1'   && <LFO1Panel/>}
-        {activeTab === 'lfo2'   && <LFO2Panel/>}
+        {activeTab === 'lfo1'   && <LFOPanel lfoIndex={1} lfoColor={colors.section.lfo1}/>}
+        {activeTab === 'lfo2'   && <LFOPanel lfoIndex={2} lfoColor={colors.section.lfo2}/>}
       </div>
     </div>
   );

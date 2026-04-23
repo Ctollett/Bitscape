@@ -21,12 +21,14 @@ interface PanelKnobProps {
 export function PanelKnob({ value, onChange, label, color, trackColor }: PanelKnobProps) {
   const isDragging = useRef(false);
   const lastY = useRef(0);
+  const accValue = useRef(value);
   const [showValue, setShowValue] = useState(false);
 
   const onPointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     isDragging.current = true;
     lastY.current = e.clientY;
+    accValue.current = value;
     setShowValue(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
@@ -35,8 +37,8 @@ export function PanelKnob({ value, onChange, label, color, trackColor }: PanelKn
     if(!isDragging.current) return
     const delta = lastY.current - e.clientY
     lastY.current = e.clientY
-    const newValue = Math.max(0, Math.min(1, value + delta / 150))
-    onChange(newValue)
+    accValue.current = Math.max(0, Math.min(1, accValue.current + delta / 150))
+    onChange(accValue.current)
   }
 
   const onPointerUp = () => {
@@ -70,8 +72,8 @@ export function PanelKnob({ value, onChange, label, color, trackColor }: PanelKn
         <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={2} strokeLinecap="round" />
       </svg>
       <div style={{ display: 'grid' }}>
-        <span style={{ gridArea: '1/1', ...typography.label.sm, color: trackColor ?? colors.control.track, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
-        <span style={{ gridArea: '1/1', ...typography.label.sm, color: trackColor ?? colors.control.track, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0 }}>{Math.round(value * 100)}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: colors.text.muted, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 0 : 1 }}>{label}</span>
+        <span style={{ gridArea: '1/1', ...typography.label.sm, color: colors.text.muted, userSelect: 'none', WebkitUserSelect: 'none', textAlign: 'center', opacity: showValue ? 1 : 0 }}>{Math.round(value * 100)}</span>
       </div>
     </div>
   );

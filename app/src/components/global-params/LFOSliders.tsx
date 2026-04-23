@@ -16,8 +16,8 @@ export function LFOSliders({ speed, depth, onSpeedChange, onDepthChange, lfoInde
     <div style={{ display: 'flex', gap: 32, alignItems: 'flex-end' }}>
       <PanelSlider
         color={color}
-        value={speed / 10}
-        onChange={(v) => onSpeedChange(v * 10)}
+        value={Math.sqrt(speed / 100)}
+        onChange={(v) => onSpeedChange(v * v * 100)}
         label="Speed"
       />
       <PanelSlider

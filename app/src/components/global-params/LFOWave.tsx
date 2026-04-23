@@ -79,7 +79,7 @@ export function LFOWave({ speed, depth, waveform, color = '#888', onWaveformChan
         const tick = () => {
             const shift = (phaseRef.current % 1) * CYCLE_WIDTH
             groupRef.current?.setAttribute('transform', `translate(${-shift}, 0)`)
-            phaseRef.current += speed / 127 * 0.05
+            phaseRef.current += speed / 100 * 0.05
             requestRef.current = requestAnimationFrame(tick)
         }
         requestRef.current = requestAnimationFrame(tick)

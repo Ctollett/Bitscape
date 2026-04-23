@@ -6,7 +6,7 @@ import { TabSelect } from '../TabSelect';
 import { Panel } from '../Panel';
 import { PanelKnob } from '../PanelKnob';
 import { PanelGroup } from '../PanelGroup';
-import { colors } from '../../tokens';
+import { colors, typography } from '../../tokens';
 
 // Ordered to match LfoDestination enum in lfo.rs
 const DESTINATIONS: { value: number; label: string; group: string }[] = [
@@ -37,7 +37,6 @@ const DESTINATIONS: { value: number; label: string; group: string }[] = [
   { value: 21, label: 'Env Amt',    group: 'Filter' },
 ];
 
-const DEST_GROUPS = ['FM Synth', 'Amp', 'Filter'] as const;
 
 const WAVEFORMS = [
   { value: 0, label: '△', title: 'Triangle' },
@@ -59,9 +58,10 @@ const MODES = [
 
 interface LFOPanelProps {
   lfoIndex: 1 | 2;
+  lfoColor: string
 }
 
-export function LFOPanel({ lfoIndex }: LFOPanelProps) {
+export function LFOPanel({ lfoIndex, lfoColor }: LFOPanelProps) {
   const { patch, dispatch } = usePatch();
   const [assigning, setAssigning] = useState(false);
 
@@ -83,48 +83,24 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
   // ── Assignment panel ──────────────────────────────────────────────────────
   if (assigning) {
     return (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: '10px 20px', gap: '10px', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ width: '100%', alignSelf: 'stretch', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', paddingTop: 36, alignContent: 'space-between' }}>
+        {DESTINATIONS.map(d => (
           <button
-            onClick={() => setAssigning(false)}
-            style={{ background: 'transparent', border: '1px solid #333', borderRadius: '4px', color: '#888', fontSize: '11px', cursor: 'pointer', padding: '3px 8px' }}
+            key={d.value}
+            onClick={() => { update({ destination: d.value }); setAssigning(false); }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              textAlign: 'left',
+              ...typography.label.lg, fontSize: 10,
+              color: destination === d.value ? lfoColor : colors.text.muted,
+            }}
           >
-            ← Back
+            {d.label}
           </button>
-          <span style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            LFO {lfoIndex} Destination
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '16px' }}>
-          {DEST_GROUPS.map(group => (
-            <div key={group} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '9px', color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2px' }}>
-                {group}
-              </span>
-              {DESTINATIONS.filter(d => d.group === group).map(d => (
-                <button
-                  key={d.value}
-                  onClick={() => { update({ destination: d.value }); setAssigning(false); }}
-                  style={{
-                    padding: '5px 10px',
-                    background: destination === d.value ? '#4a9eff' : 'transparent',
-                    border: '1px solid',
-                    borderColor: destination === d.value ? '#4a9eff' : '#2a2a2a',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    color: destination === d.value ? '#fff' : '#666',
-                    fontSize: '10px',
-                    textAlign: 'left',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     );
   }
@@ -136,7 +112,7 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
       {/* Mode tabs + Wave */}
       <PanelGroup gap={20}>
         <TabSelect options={MODES} value={mode} onChange={(v) => update({ mode: v })} />
-        <LFOWave speed={speed} depth={depth} waveform={waveform} color={lfoIndex === 1 ? colors.section.lfo1 : colors.section.lfo2} onWaveformChange={(v) => update({ waveform: v })} />
+        <LFOWave speed={speed} depth={depth} waveform={waveform} color={lfoColor} onWaveformChange={(v) => update({ waveform: v })} />
       </PanelGroup>
 
       {/* Speed + Depth sliders */}
@@ -150,16 +126,15 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
 
       {/* Destination */}
       <PanelGroup>
-        <span style={{ fontSize: '10px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Destination</span>
         <button
           onClick={() => setAssigning(true)}
           style={{
             padding: '5px 10px',
-            background: activeDest ? 'rgba(74,158,255,0.12)' : 'transparent',
+            background: 'transparent',
             border: '1px solid',
-            borderColor: activeDest ? '#4a9eff' : '#333',
+            borderColor: activeDest ? lfoColor : '#333',
             borderRadius: '4px',
-            color: activeDest ? '#4a9eff' : '#555',
+            color: activeDest ? lfoColor: '#555',
             fontSize: '10px',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
@@ -167,12 +142,13 @@ export function LFOPanel({ lfoIndex }: LFOPanelProps) {
         >
           {activeDest ? activeDest.label : 'None'} ›
         </button>
+         <span style={{ ...typography.label.sm, color: colors.text.muted }}>Destination</span>
       </PanelGroup>
 
       {/* Mult + Fade knobs */}
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-        <PanelKnob color={lfoIndex === 1 ? colors.section.lfo1 : colors.section.lfo2} label="Mult" value={(multiplier - 1) / 7} onChange={(v) => update({ multiplier: Math.round(v * 7) + 1 })} />
-        <PanelKnob color={lfoIndex === 1 ? colors.section.lfo1 : colors.section.lfo2} label="Fade" value={(fade + 64) / 127} onChange={(v) => update({ fade: Math.round(v * 127) - 64 })} />
+        <PanelKnob color={lfoColor} label="Mult" value={(multiplier - 1) / 7} onChange={(v) => update({ multiplier: Math.round(v * 7) + 1 })} />
+        <PanelKnob color={lfoColor} label="Fade" value={(fade + 64) / 127} onChange={(v) => update({ fade: Math.round(v * 127) - 64 })} />
       </div>
 
 
