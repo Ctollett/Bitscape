@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import LeftArrow from '../assets/svgs/left-arrow.svg?react';
 import RightArrow from '../assets/svgs/right-arrow.svg?react';
-import FloppyIcon from '../assets/svgs/lucide/floppy-disk.svg?react';
 import { spacing, typography, colors, borderRadius } from '../tokens';
 import { usePatch } from '../fm-canvas/patch-context';
 import { loadLibrary, saveToLibrary } from '../fm-canvas/patch-storage';
+import { SaveButton } from './SaveButton';
 
 
 const categories = ['Bass', 'Lead', 'Pad', 'Keys', 'Pluck', 'Bell', 'Brass', 'Strings', 'Arp', 'Sequence', 'FX', 'Drum', 'Other']
@@ -13,7 +13,6 @@ export function PresetSelect() {
 
   const { patch, dispatch } = usePatch()
   const [presetIndex, setPresetIndex] = useState<number>(0)
-  const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [presets, setPresets] = useState(() => loadLibrary())
   const [name, setName] = useState('')
@@ -50,7 +49,7 @@ export function PresetSelect() {
   return (
     <div style={{ gridRow: '1 / 3', display: 'flex', justifyItems: 'center' }}>
       {/* Row 1: pill */}
-      <div style={{ display: 'flex', flexDirection: 'row', gap: spacing.md, justifyContent: 'center', alignItems: 'center'}}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: spacing.xs, justifyContent: 'center', alignItems: 'center'}}>
        <div style={{ display: 'flex', flexDirection: 'column'}} >
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <button onClick={() => handlePresets(-1)} style={{ backgroundColor: 'transparent', border: 'none', padding: 0, margin: 0, lineHeight: 1, display: 'flex' }}><LeftArrow /></button>
@@ -93,11 +92,12 @@ export function PresetSelect() {
           <button type='submit'>Submit</button>
          </form>
       ) : (
-         <button style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent', borderRadius: '8px', height: '16px', width: '16px', border: 'none'}} onClick={() => handleSavePreset()}><FloppyIcon/></button>
+         <button style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent', borderRadius: '8px', height: '16px', width: '16px', border: 'none'}} onClick={() => handleSavePreset()} />
       )}
       </div>
       </div>
       {/* Row 2: category + dots */}
+        <SaveButton />
          </div>
       </div>
 
