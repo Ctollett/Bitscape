@@ -5,6 +5,7 @@ import XIcon from '../../assets/svgs/lucide/x.svg?react';
 import Dropdown from '../UI/Dropdown/Dropdown';
 import type { Option } from '../../fm-canvas/types';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 
 
@@ -36,34 +37,31 @@ setSelectedCategory(option)
 
 
 
-  return (
+  return createPortal(
     <div className="modal">
       <div className="modal-content">
         <div className='modal-dots-top'>
-        <span><ModalDot /></span>
-        <span><ModalDot /></span>
+          <span><ModalDot /></span>
+          <span><ModalDot /></span>
         </div>
-      <div className='modal-form-section'>
-        <div className='modal-title'>
-          <span>SAVE NEW PRESET</span>
-          <span><XIcon/></span>
+        <div className='modal-form-section'>
+          <div className='modal-title'>
+            <span>SAVE NEW PRESET</span>
+          </div>
+          <div className='modal-input'>
+            <input placeholder="Enter Preset Name" type='name' name='name' />
+            <Dropdown onChange={handleSelect} options={categories} placeholder="Select Category" />
+          </div>
+          <div className='modal-button-section'>
+            <button>CANCEL</button>
+            <button>SAVE</button>
+          </div>
         </div>
-        <div className='modal-input'>
-        <div>
-          <input placeholder="Enter Preset Name" type='name' name='name'></input>
-          <div><Dropdown onChange={handleSelect} options={categories} placeholder="Select Category"></Dropdown></div>
-        </div>
-      <div className='modal-button-section'>
-        <button>CANCEL</button>
-        <button>SAVE</button>
-      </div>
-        </div>
-      </div>
         <div className='modal-dots-bottom'>
-        <span><ModalDot /></span>
-        <span><ModalDot /></span>
+          <span><ModalDot /></span>
+          <span><ModalDot /></span>
         </div>
-        </div>
+      </div>
     </div>
-  );
+  , document.body);
 }

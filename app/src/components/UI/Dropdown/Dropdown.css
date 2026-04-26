@@ -1,12 +1,13 @@
 .dropdown {
     width: 128px;
-    height: 44px;
+    height: 32px;
     border-bottom: 1px solid grey;
 }
 
 .dropdown button {
     text-align: left;
     width: 100%;
+    padding-left: 4px;
     height: 100%;
     border: none;
     background-color: transparent;
@@ -14,4 +15,15 @@
 
 .dropdown-list {
     list-style: none;
+    background: #E8E3D9;
+    color: #1C1A18;
+    font-size: 12px;
+    border-radius: 0 0 12px 12px;
+    padding-left: 4px;
+    position: relative;
+    z-index: 10;
+}
+
+.dropdown-list li {
+  padding-bottom: 8px;
 }
