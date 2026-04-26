@@ -1,3 +1,8 @@
+export interface Option {
+  value: string;
+  label: string;
+}
+
 /** 2D coordinate on the canvas */
 export interface Point {
   x: number;
