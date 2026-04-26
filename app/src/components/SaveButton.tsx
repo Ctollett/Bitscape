@@ -1,6 +1,7 @@
 import { colors } from '../tokens';
 import SaveIcon from '../assets/svgs/save.svg?react';
 import MenuIcon from '../assets/svgs/menu.svg?react';
+import { PopUpModal } from './PresetSaveModal/PresetSaveModal';
 
 const W = 44;
 const H = 20;
@@ -37,6 +38,7 @@ const RIGHT = `
 export function SaveButton() {
   return (
     <div style={{ position: 'relative', width: W, height: H }}>
+      <PopUpModal />
       <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
         <button style={{ flex: 1, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <SaveIcon />
