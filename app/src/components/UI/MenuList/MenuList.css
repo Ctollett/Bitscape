@@ -1,0 +1,25 @@
+.menu-list {
+    list-style: none;
+    background: #E8E3D9;
+    color: #1C1A18;
+    font-size: 12px;
+    border-radius: 12px;
+    padding: 8px 12px;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    min-width: 100px;
+    margin: 0;
+}
+
+.menu-list li {
+    padding: 6px 0;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.menu-list li:hover {
+    opacity: 0.6;
+}

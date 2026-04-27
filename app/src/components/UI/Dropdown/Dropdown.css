@@ -10,7 +10,10 @@
     padding-left: 4px;
     height: 100%;
     border: none;
+    font-size: 12px;
+    padding-bottom: 32px;
     background-color: transparent;
+    cursor: pointer;
 }
 
 .dropdown-list {
@@ -22,8 +25,10 @@
     padding-left: 4px;
     position: relative;
     z-index: 10;
+ 
 }
 
 .dropdown-list li {
   padding-bottom: 8px;
+  cursor: pointer;
 }

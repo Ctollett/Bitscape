@@ -1,7 +1,9 @@
 import { colors } from '../tokens';
 import SaveIcon from '../assets/svgs/save.svg?react';
 import MenuIcon from '../assets/svgs/menu.svg?react';
-import { PopUpModal } from './PresetSaveModal/PresetSaveModal';
+import { MenuList } from './UI/MenuList/MenuList';
+import { useState, useEffect, useRef } from 'react';
+import type { Option } from '../fm-canvas/types';
 
 const W = 44;
 const H = 20;
@@ -35,16 +37,51 @@ const RIGHT = `
   A ${R} ${R} 0 0 1 ${MID} ${H - R}
 `.trim();
 
-export function SaveButton() {
+interface SaveButtonProps {
+  onOpen: () => void
+  
+}
+
+export function SaveButton({ onOpen }: SaveButtonProps) {
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<Option | null>(null)
+  const menuRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node))
+        setIsMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
+  const menuItems: Option[]  = [{label: 'Save As', value: 'Save as'}, {label: 'Delete', value: 'Delete'}, {label: 'Rename', value: 'Rename'}, {label: 'Init', value: 'Init'}, {label: 'Export', value: 'Export'}, {label: 'Import', value: 'Import'} ]
+
+  const handleMenuOpen = () => {
+    setIsMenuOpen(true)
+  }
+
+  const handleMenuClose = () => {
+    setIsMenuOpen(false)
+  }
+
+  const handleSelect = (option: Option) => {
+    setSelectedItem(option)
+    setIsMenuOpen(false)
+  }
+
   return (
     <div style={{ position: 'relative', width: W, height: H }}>
-      <PopUpModal />
-      <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
-        <button style={{ flex: 1, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+<div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+        <button onClick={onOpen} style={{ flex: 1, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <SaveIcon />
         </button>
-        <button style={{ flex: 1, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button ref={menuRef} onClick={isMenuOpen ? handleMenuClose : handleMenuOpen} style={{ position: 'relative', flex: 1, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <MenuIcon width={12} height={12} />
+          {isMenuOpen && (
+            <MenuList onSelect={handleSelect} options={menuItems} />
+          )}
         </button>
       </div>
       <svg width={W} height={H} viewBox="-0.5 -0.5 45 21" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>

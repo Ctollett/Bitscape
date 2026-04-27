@@ -6,12 +6,37 @@ import Dropdown from '../UI/Dropdown/Dropdown';
 import type { Option } from '../../fm-canvas/types';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { colors } from '../../tokens';
+import { usePatch } from '../../fm-canvas/patch-context'
+import { saveToLibrary } from '../../fm-canvas/patch-storage';
+
+interface PopUpModalProps {
+  onClose: () => void
+}
 
 
+export function PopUpModal({ onClose } : PopUpModalProps) {
 
-export function PopUpModal() {
-
+const { patch } = usePatch()
+const [presetName, setPresetName] = useState('')
+const [nameError, setNameError] = useState(false)
+const [categoryError, setCategoryError] = useState(false)
 const [category, setSelectedCategory] = useState<Option | null>(null)
+
+const handleSave = () => {
+  console.log('presetName:', presetName, 'category:', category)
+  setCategoryError(false)
+  setNameError(false)
+  if (!presetName) {
+    setNameError(true) 
+    return
+  } else if(!category) {
+    setCategoryError(true)
+    return
+  }
+  saveToLibrary(presetName, patch, category.value)
+  onClose()
+}
 
 const categories: Option[] = [
   { value: 'bass', label: 'Bass' },
@@ -31,8 +56,6 @@ const categories: Option[] = [
 
 const handleSelect = (option:Option) => {
 setSelectedCategory(option)
-
-
 }
 
 
@@ -49,12 +72,18 @@ setSelectedCategory(option)
             <span>SAVE NEW PRESET</span>
           </div>
           <div className='modal-input'>
-            <input placeholder="Enter Preset Name" type='name' name='name' />
+            <input placeholder="Enter Preset Name" type='text' value={presetName} onChange={(e) => setPresetName(e.target.value)} />
+            {nameError && (
+              <p>Please enter a preset name</p>
+            )}
             <Dropdown onChange={handleSelect} options={categories} placeholder="Select Category" />
+                {categoryError && (
+              <p>Please select a category</p>
+            )}
           </div>
           <div className='modal-button-section'>
-            <button>CANCEL</button>
-            <button>SAVE</button>
+            <button onClick={onClose} style={{color: colors.text.secondary, cursor: 'pointer'}}>CANCEL</button>
+            <button onClick={handleSave} style={{color: colors.text.secondary, cursor: 'pointer'}}>SAVE</button>
           </div>
         </div>
         <div className='modal-dots-bottom'>
