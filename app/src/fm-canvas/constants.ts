@@ -1,6 +1,7 @@
 import type { Point, FMCanvasPatch, WaveTypeId } from './types';
 import { colors } from '../tokens';
 
+export const NATURAL_LENGTH = 350;
 export const CANVAS_WIDTH  = 1200;
 export const CANVAS_HEIGHT = 720;
 export const NODE_RADIUS = 59;

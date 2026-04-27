@@ -1,7 +1,8 @@
 import type { Point } from './types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {animate} from 'framer-motion'
 import { edgePoint } from './utils';
+
 
 interface ConnectionLineProps {
   src: Point;
@@ -14,66 +15,105 @@ interface ConnectionLineProps {
   srcColor: string;
   dstColor: string;
   onRemove: () => void;
+  getSrcPullStrength?: () => number;
+  getDstPullStrength?: () => number;
 }
 
-export function ConnectionLine({ src, dst, color, srcColor, dstColor, onRemove }: ConnectionLineProps) {
+const NATURAL_LENGTH = 350
+
+function computePathData(src: Point, dst: Point, srcPull: number, dstPull: number, multiplier: number) {
+  const dx = dst.x - src.x
+  const dy = dst.y - src.y
+  const nodeDist = Math.sqrt(dx * dx + dy * dy)
+  if (nodeDist === 0) return { pathD: '', srcDot: src, dstDot: dst, glowWidth: 2, glowOpacity: 0 }
+
+  const nx = dx / nodeDist
+  const ny = dy / nodeDist
 
   const srcEdge = edgePoint(src, dst)
   const dstEdge = edgePoint(dst, src)
 
+  const srcDot = { x: srcEdge.x + nx * (5 + srcPull), y: srcEdge.y + ny * (5 + srcPull) }
+  const dstDot = { x: dstEdge.x - nx * (5 + dstPull), y: dstEdge.y - ny * (5 + dstPull) }
 
-  const dx = dstEdge.x - srcEdge.x
-  const dy = dstEdge.y - srcEdge.y
+  const ldx = dstDot.x - srcDot.x
+  const ldy = dstDot.y - srcDot.y
+  const lineDist = Math.sqrt(ldx * ldx + ldy * ldy)
+  const slack = Math.max(0, NATURAL_LENGTH - lineDist)
 
-  const dist = Math.sqrt(dx * dx + dy * dy)
-
-  const srcDot = { x: srcEdge.x + (dx / dist) * 5, y: srcEdge.y + (dy / dist) * 5 }
-  const dstDot = { x: dstEdge.x + (dx / dist) * -5, y: dstEdge.y + (dy / dist) * -5 }
-
-  const naturalLength = 350
-
-  const slack = Math.max(0, naturalLength - dist)
-
-  let cp1x = srcDot.x + (dstDot.x - srcDot.x) * 0.25
-  let cp1y = srcDot.y + (dstDot.y - srcDot.y) * 0.25
-
-  let cp2x = dstDot.x + (srcDot.x - dstDot.x) * 0.25
-  let cp2y = dstDot.y + (srcDot.y - dstDot.y) * 0.25
-
-const [multiplier, setMultiplier] = useState(0)
-
-useEffect(() => {
-  animate(0, 1, {
-    type: 'spring',
-    stiffness: 80,
-    damping: 12,
-    onUpdate: (v) => setMultiplier(v)
-  })
-}, [])
-
+  let cp1x = srcDot.x + ldx * 0.25
+  let cp1y = srcDot.y + ldy * 0.25
+  let cp2x = dstDot.x - ldx * 0.25
+  let cp2y = dstDot.y - ldy * 0.25
 
   cp1y += slack * multiplier * 0.5
   cp2y += slack * multiplier * 0.5
 
-
-  const tautness = 1 - Math.min(1, slack / naturalLength)
+  const tautness = 1 - Math.min(1, slack / NATURAL_LENGTH)
   const glowWidth = 2 + (1 - tautness) * 5
   const glowOpacity = (1 - tautness) * 0.25
-  
 
+  const pathD = `M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`
+  return { pathD, srcDot, dstDot, glowWidth, glowOpacity }
+}
+
+export function ConnectionLine({ src, dst, color, srcColor, dstColor, onRemove, getSrcPullStrength, getDstPullStrength }: ConnectionLineProps) {
+  const [multiplier, setMultiplier] = useState(0)
+  const multiplierRef = useRef(0)
+  const srcRef = useRef(src)
+  const dstRef = useRef(dst)
+  srcRef.current = src
+  dstRef.current = dst
+
+  const glowPathRef = useRef<SVGPathElement>(null)
+  const linePathRef = useRef<SVGPathElement>(null)
+  const hitPathRef = useRef<SVGPathElement>(null)
+  const srcCircleRef = useRef<SVGCircleElement>(null)
+  const dstCircleRef = useRef<SVGCircleElement>(null)
+
+  useEffect(() => {
+    animate(0, 1, {
+      type: 'spring',
+      stiffness: 80,
+      damping: 12,
+      onUpdate: (v) => { setMultiplier(v); multiplierRef.current = v }
+    })
+  }, [])
+
+  useEffect(() => {
+    let raf: number
+    const tick = () => {
+      const srcPull = getSrcPullStrength?.() ?? 0
+      const dstPull = getDstPullStrength?.() ?? 0
+      if (srcPull > 0 || dstPull > 0) {
+        const { pathD, srcDot, dstDot, glowWidth, glowOpacity } = computePathData(
+          srcRef.current, dstRef.current, srcPull, dstPull, multiplierRef.current
+        )
+        glowPathRef.current?.setAttribute('d', pathD)
+        glowPathRef.current?.setAttribute('stroke-width', String(glowWidth))
+        glowPathRef.current?.setAttribute('opacity', String(glowOpacity))
+        linePathRef.current?.setAttribute('d', pathD)
+        hitPathRef.current?.setAttribute('d', pathD)
+        if (srcCircleRef.current) { srcCircleRef.current.setAttribute('cx', String(srcDot.x)); srcCircleRef.current.setAttribute('cy', String(srcDot.y)) }
+        if (dstCircleRef.current) { dstCircleRef.current.setAttribute('cx', String(dstDot.x)); dstCircleRef.current.setAttribute('cy', String(dstDot.y)) }
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [getSrcPullStrength, getDstPullStrength])
+
+  const { pathD, srcDot, dstDot, glowWidth, glowOpacity } = computePathData(src, dst, 0, 0, multiplier)
 
   return (
     <g>
-      <path d={`M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`}
-        fill="none" stroke={color || '#888'} strokeWidth={glowWidth} opacity={glowOpacity} strokeLinecap="round" />
-      <path d={`M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`}
-        fill="none" stroke={color || '#888'} strokeWidth={1.5} strokeLinecap="round" />
-      <path d={`M ${srcDot.x} ${srcDot.y} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${dstDot.x} ${dstDot.y}`}
-        fill="none" stroke={'transparent'} strokeWidth={14} strokeLinecap="round"
+      <path ref={glowPathRef} d={pathD} fill="none" stroke={color || '#888'} strokeWidth={glowWidth} opacity={glowOpacity} strokeLinecap="round" />
+      <path ref={linePathRef} d={pathD} fill="none" stroke={color || '#888'} strokeWidth={1.5} strokeLinecap="round" />
+      <path ref={hitPathRef} d={pathD} fill="none" stroke={'transparent'} strokeWidth={14} strokeLinecap="round"
         style={{ cursor: 'pointer', pointerEvents: 'stroke' }}
         onClick={(e) => { e.stopPropagation(); onRemove(); }} />
-      <circle cx={srcDot.x} cy={srcDot.y} r={5} fill={srcColor} />
-      <circle cx={dstDot.x} cy={dstDot.y} r={5} fill="var(--color-canvas-bg, #0a0a0a)" stroke={dstColor} strokeWidth={1.5} />
+      <circle ref={srcCircleRef} cx={srcDot.x} cy={srcDot.y} r={5} fill={srcColor} />
+      <circle ref={dstCircleRef} cx={dstDot.x} cy={dstDot.y} r={5} fill="var(--color-canvas-bg, #0a0a0a)" stroke={dstColor} strokeWidth={1.5} />
     </g>
   );
 }

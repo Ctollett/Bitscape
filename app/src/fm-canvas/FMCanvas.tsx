@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { usePatch } from './patch-context';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, OPERATOR_COLORS } from './constants';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, OPERATOR_COLORS, RING_RADIUS, NATURAL_LENGTH } from './constants';
 import { OperatorNode } from './OperatorNode';
 import { ConnectionLine } from './ConnectionLine';
 import { DraftConnection } from './DraftConnection';
@@ -19,9 +19,9 @@ export function FMCanvas() {
 const { patch, dispatch } = usePatch()
 const [selectedOp, setSelectedOp] = useState<number | null>(null)
 const [interaction, setInteraction] = useState<InteractionState>({ mode: 'idle', fromOp: null, mousePos: null})
+const nodeDragRef = useRef<{ opIndex: number, pos: Point } | null>(null)
 
 const canvasRef = useRef<HTMLDivElement>(null)
-const NATURAL_LENGTH = 350
 const velocitiesRef = useRef<Record<number, Point>>({})
 const rafRef = useRef<number>(0)
 const dragOpRef = useRef<number | null>(null)
@@ -29,6 +29,7 @@ const dragPosRef = useRef<Point>({ x: 0, y: 0 })
 const patchRef = useRef(patch)
 const localPositionsRef = useRef<Record<number, Point>>({})
 const activeConnectedOpsRef = useRef<Set<number>>(new Set())
+const pullStrengthsRef = useRef<Record<number, number>>({})
 
 patchRef.current = patch
 
@@ -49,6 +50,7 @@ const onPointerUp = () => {
     setInteraction({ mode: 'idle', fromOp: null, mousePos: null })
   }
   dragOpRef.current = null
+  nodeDragRef.current = null
 }
 
 
@@ -106,6 +108,7 @@ rafRef.current = requestAnimationFrame(runPhysics)
 
 
 const handleStringTension = (opIndex: number, pos: Point) => {
+  nodeDragRef.current = { opIndex, pos }
   activeConnectedOpsRef.current.clear()
   localPositionsRef.current = {}
     
@@ -212,11 +215,21 @@ void main() {
       dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst}
       srcColor={OPERATOR_COLORS[conn.src]}
       dstColor={OPERATOR_COLORS[conn.dst]}
+      getSrcPullStrength={() => pullStrengthsRef.current[conn.src] ?? 0}
+      getDstPullStrength={() => pullStrengthsRef.current[conn.dst] ?? 0}
       onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
       ))}
-      {interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.mousePos && (
-  <DraftConnection from={patch.operators[interaction.fromOp].position} to={interaction.mousePos} />
-)}
+      {interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.mousePos && (() => {
+        const opPos = patch.operators[interaction.fromOp].position
+        const dx = interaction.mousePos.x - opPos.x
+        const dy = interaction.mousePos.y - opPos.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        const pullAngle = Math.atan2(dy, dx)
+        const pullAmount = Math.min(dist * 0.03, RING_RADIUS * 0.08)
+        const tipRadius = RING_RADIUS + pullAmount
+        const fromEdge = { x: opPos.x + tipRadius * Math.cos(pullAngle), y: opPos.y + tipRadius * Math.sin(pullAngle) }
+        return <DraftConnection from={opPos} to={interaction.mousePos} fromEdge={fromEdge} color={OPERATOR_COLORS[interaction.fromOp]} />
+      })()}
 
 
     </svg>
@@ -225,6 +238,8 @@ void main() {
       key={`op-${i}`}
       opIndex={i}
       isCarrier={false}
+      dragPos={interaction.mode === 'drawing-connection' && interaction.fromOp === i ? interaction.mousePos : null}
+      isTargetable={interaction.mode === 'drawing-connection' && interaction.fromOp !== i}
       onDragMove={handleStringTension}
       onStartConnection={(opIndex) => setInteraction({ mode: 'drawing-connection', fromOp: opIndex, mousePos: null })}
       onEndConnection={(targetOp) => {
@@ -243,6 +258,16 @@ void main() {
     setInteraction({ mode: 'idle', fromOp: null, mousePos: null })
   }
 }}
+      getPullToward={() => {
+        const drag = nodeDragRef.current
+        if (!drag || drag.opIndex === i) return null
+        const connected = patchRef.current.connections.some(c =>
+          (c.src === i && c.dst === drag.opIndex) ||
+          (c.src === drag.opIndex && c.dst === i)
+        )
+        return connected ? drag.pos : null
+      }}
+      onPullStrength={(strength) => { pullStrengthsRef.current[i] = strength }}
       onOpenDetail={() => {}}
       onSelect={setSelectedOp}
 isSelected={selectedOp === i}
