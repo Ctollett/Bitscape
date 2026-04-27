@@ -61,7 +61,7 @@ export function MasterOutput() {
  }, [])
 
   return (
-    <div style={{ gridRow: '1 / 3', display: 'grid', gridTemplateRows: 'subgrid', gridTemplateColumns: 'auto auto', alignItems: 'center', columnGap: spacing.md }}>
+    <div style={{ gridRow: '1 / 3', display: 'grid', gridTemplateRows: 'subgrid', gridTemplateColumns: 'auto auto', alignItems: 'center', columnGap: spacing.lg }}>
       {/* L meter — row 1 */}
       <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <span style={{ ...typography.label.lg, lineHeight: 1, width: 8 }}>L</span>
@@ -74,8 +74,8 @@ export function MasterOutput() {
       </div>
       {/* Knobs — span both rows */}
       <div style={{ gridRow: '1 / 3', gridColumn: 2, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-        <PanelKnob color={colors.text.primary} value={drive} onChange={setDrive} label="DRIVE" />
-        <PanelKnob color={colors.text.primary} value={mix} onChange={setMix} label="MIX" />
+        <PanelKnob color={colors.text.primary} value={drive} onChange={setDrive} label="DRIVE" size={28} />
+        <PanelKnob color={colors.text.primary} value={mix} onChange={setMix} label="MIX" size={28} />
       </div>
       {/* R meter — row 2 */}
       <div style={{ alignSelf: 'flex-start', marginTop: -4, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>

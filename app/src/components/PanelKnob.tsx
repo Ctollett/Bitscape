@@ -4,10 +4,7 @@ import { colors, typography, spacing } from '../tokens'
 
 const SIZE = 40;
 const RADIUS = 16;
-const CENTER = SIZE / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const SWEEP = 270;
-const MAX_ARC = (SWEEP / 360) * CIRCUMFERENCE;
 const START_DEG = 135; // 7 o'clock position from SVG 3 o'clock
 
 interface PanelKnobProps {
@@ -16,9 +13,10 @@ interface PanelKnobProps {
   label: string;
   color?: string;
   trackColor?: string;
+  size?: number;
 }
 
-export function PanelKnob({ value, onChange, label, color, trackColor }: PanelKnobProps) {
+export function PanelKnob({ value, onChange, label, color, trackColor, size = SIZE }: PanelKnobProps) {
   const isDragging = useRef(false);
   const lastY = useRef(0);
   const accValue = useRef(value);
@@ -47,26 +45,32 @@ export function PanelKnob({ value, onChange, label, color, trackColor }: PanelKn
   }
 
   // Indicator line at the tip of the value arc
+  const scale = size / SIZE;
+  const radius = RADIUS * scale;
+  const center = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  const maxArc = (SWEEP / 360) * circumference;
+
   const indicatorAngleRad = (START_DEG + value * SWEEP) * (Math.PI / 180);
-  const x1 = CENTER + RADIUS * Math.cos(indicatorAngleRad);
-  const y1 = CENTER + RADIUS * Math.sin(indicatorAngleRad);
-  const x2 = CENTER + 3 * Math.cos(indicatorAngleRad);
-  const y2 = CENTER + 3 * Math.sin(indicatorAngleRad);
+  const x1 = center + radius * Math.cos(indicatorAngleRad);
+  const y1 = center + radius * Math.sin(indicatorAngleRad);
+  const x2 = center + 3 * scale * Math.cos(indicatorAngleRad);
+  const y2 = center + 3 * scale * Math.sin(indicatorAngleRad);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', userSelect: 'none', WebkitUserSelect: 'none', gap: spacing.sm }}>
-      <svg width={SIZE} height={SIZE} style={{ cursor: 'ns-resize' }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
+      <svg width={size} height={size} style={{ cursor: 'ns-resize' }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
         {/* Track ring */}
         <circle
           strokeWidth={2} fill='none' stroke={trackColor ?? colors.control.track}
-          cx={CENTER} cy={CENTER} r={RADIUS}
+          cx={center} cy={center} r={radius}
         />
         {/* Value arc */}
         <circle style={{ pointerEvents: 'none' }}
-          strokeDasharray={`${value * MAX_ARC} ${CIRCUMFERENCE}`}
-          transform={`rotate(${START_DEG}, ${CENTER}, ${CENTER})`}
+          strokeDasharray={`${value * maxArc} ${circumference}`}
+          transform={`rotate(${START_DEG}, ${center}, ${center})`}
           strokeWidth={2} strokeLinecap="round" fill="none" stroke={color}
-          cx={CENTER} cy={CENTER} r={RADIUS}
+          cx={center} cy={center} r={radius}
         />
         {/* Indicator line */}
         <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={2} strokeLinecap="round" />
