@@ -45,8 +45,10 @@ export interface FMCanvasPatch {
 
   // Derived engine params (computed from spatial layout)
   algorithmIndex: number;   // 0-7
-  modDepthA: number;        // 0-127
-  modDepthB: number;        // 0-127
+  modDepthA: number;        // 0-127 (legacy, kept for LFO compat)
+  modDepthB: number;        // 0-127 (legacy, kept for LFO compat)
+  /** Per-connection FM depth. Index = src * 4 + dst. Values 0–127. */
+  modDepthMatrix: number[];
   operatorFeedback: [number, number, number, number]; // 0-127 per operator
   operatorDetune: [number, number, number, number];   // -100 to +100 cents per operator
   operatorHarm: [number, number, number, number];     // -26 to +26 per operator

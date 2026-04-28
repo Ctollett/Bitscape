@@ -6,6 +6,7 @@ import { FMCanvas } from './fm-canvas/FMCanvas';
 import './App.css';
 import { GlobalControlPanel } from './fm-canvas/GlobalControlPanel';
 import { Header } from './components/Header';
+import { MonitorPanel } from './components/MonitorPanel';
 import { colors, borderRadius, spacing } from './tokens';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from './fm-canvas/constants';
 
@@ -47,6 +48,7 @@ function App() {
                 </div>
               </div>
             </div>
+            <MonitorPanel />
             <Keyboard />
           </div>
         </PatchProvider>

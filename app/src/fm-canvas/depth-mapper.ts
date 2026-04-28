@@ -1,8 +1,6 @@
 import type { FMCanvasPatch } from './types';
 import { DEPTH_DECAY_CONSTANT } from './constants';
 
-
-/** Euclidean distance between two points. */
 function distance(a: { x: number; y: number }, b: { x: number; y: number }): number {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
@@ -22,43 +20,37 @@ function distanceToDepth(distancePx: number): number {
 }
 
 /**
- * Compute mod_depth_a and mod_depth_b from the current patch state.
- *
- * Uses the actual user-drawn connections (excluding self-loops).
- * Groups by SOURCE operator:
- *   - Sources 0 or 1 → mod_depth_a
- *   - Sources 2 or 3 → mod_depth_b
- *
- * Averages distances within each group.
+ * Build a flat 16-element depth matrix (src*4+dst indexing).
+ * Each active connection gets its own depth based on spatial proximity.
+ * Unconnected pairs are 0. Self-loops (feedback) are always 0 here.
  */
-export function computeModDepths(patch: FMCanvasPatch): {
-  modDepthA: number;
-  modDepthB: number;
-} {
-  const activeNonSelf = patch.connections.filter(c => c.src !== c.dst);
+export function computeModDepthMatrix(patch: FMCanvasPatch): number[] {
+  const matrix = new Array(16).fill(0);
 
-  if (activeNonSelf.length === 0) return { modDepthA: 0, modDepthB: 0 };
-
-  let sumA = 0, countA = 0;
-  let sumB = 0, countB = 0;
-
-  for (const { src, dst } of activeNonSelf) {
-    const dist = distance(
-      patch.operators[src].position,
-      patch.operators[dst].position,
-    );
-
-    if (src === 0 || src === 1) {
-      sumA += dist;
-      countA++;
-    } else {
-      sumB += dist;
-      countB++;
-    }
+  for (const { src, dst } of patch.connections) {
+    if (src === dst) continue; // feedback handled separately
+    const dist = distance(patch.operators[src].position, patch.operators[dst].position);
+    matrix[src * 4 + dst] = distanceToDepth(dist);
   }
 
-  return {
-    modDepthA: countA > 0 ? distanceToDepth(sumA / countA) : 0,
-    modDepthB: countB > 0 ? distanceToDepth(sumB / countB) : 0,
-  };
+  return matrix;
+}
+
+/**
+ * Legacy: compute modDepthA/B from the matrix for backward compatibility.
+ * modDepthA = max of any A-group (src 0 or 1) connection depth.
+ * modDepthB = max of any B-group (src 2 or 3) connection depth.
+ */
+export function computeModDepths(patch: FMCanvasPatch): { modDepthA: number; modDepthB: number } {
+  const matrix = computeModDepthMatrix(patch);
+  let modDepthA = 0;
+  let modDepthB = 0;
+  for (let src = 0; src < 4; src++) {
+    for (let dst = 0; dst < 4; dst++) {
+      const d = matrix[src * 4 + dst];
+      if (src <= 1) modDepthA = Math.max(modDepthA, d);
+      else modDepthB = Math.max(modDepthB, d);
+    }
+  }
+  return { modDepthA, modDepthB };
 }

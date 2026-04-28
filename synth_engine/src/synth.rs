@@ -111,6 +111,8 @@ pub struct Synth {
     // FM parameters exposed to JS
     mod_depth_a: f32,
     mod_depth_b: f32,
+    /// Per-connection FM depth. Index = src * 4 + dst. Values 0–127.
+    mod_depth_matrix: [f32; 16],
     carrier_mix: f32,
     detune: f32,
     feedback: f32,
@@ -177,8 +179,9 @@ impl Synth {
             octave_shift: 0,
             sample_rate,
             mod_depth_a: 0.0,
-            current_algo: 0, 
+            current_algo: 0,
             mod_depth_b: 0.0,
+            mod_depth_matrix: [0.0; 16],
             carrier_mix: 1.0,
             feedback: 0.0,
             ratio_c: 1.0,
@@ -338,6 +341,15 @@ impl Synth {
 
     #[wasm_bindgen]
     pub fn set_mod_depth_b(&mut self, d: f32) { self.mod_depth_b = d.clamp(0.0, 127.0); }
+
+    /// Set per-connection FM depth from a flat 16-element array (src*4+dst indexing).
+    /// Each value is 0–127; unconnected pairs should be 0.
+    #[wasm_bindgen]
+    pub fn set_mod_depth_matrix(&mut self, data: &[f32]) {
+        for i in 0..16.min(data.len()) {
+            self.mod_depth_matrix[i] = data[i].clamp(0.0, 127.0);
+        }
+    }
 
     #[wasm_bindgen]
 pub fn set_octave(&mut self, shift: i32) {
@@ -952,8 +964,8 @@ pub fn set_lfo2_waveform(&mut self, w: u32) {
         self.apply_lfo_modulation(mod1, mod2);
 
         // Clamp modulated values to valid ranges
-        self.mod_depth_a = self.mod_depth_a.clamp(0.0, 1.0);
-        self.mod_depth_b = self.mod_depth_b.clamp(0.0, 1.0);
+        self.mod_depth_a = self.mod_depth_a.clamp(0.0, 127.0);
+        self.mod_depth_b = self.mod_depth_b.clamp(0.0, 127.0);
         self.carrier_mix = self.carrier_mix.clamp(0.0, 1.0);
         self.volume      = self.volume.clamp(0.0, 127.0);
     
@@ -964,18 +976,19 @@ pub fn set_lfo2_waveform(&mut self, w: u32) {
             for v in &mut self.voices {
                 let (vl, vr) = v.generate_sample(
                     dt,
-                    self.mod_depth_a,
-                    self.mod_depth_b,
+                    &self.mod_depth_matrix,
                     self.carrier_mix,
                 );
                 l += vl;
                 r += vr;
             }
     
-            // 2) Overdrive (tanh driver)
-            let drive_gain = 1.0 + (self.overdrive / 127.0) * 9.0;
-            l = (l * drive_gain).tanh();
-            r = (r * drive_gain).tanh();
+            // 2) Overdrive (tanh driver) — bypass entirely at zero to avoid tanh harmonic distortion
+            if self.overdrive > 0.0 {
+                let drive_gain = 1.0 + (self.overdrive / 127.0) * 9.0;
+                l = (l * drive_gain).tanh();
+                r = (r * drive_gain).tanh();
+            }
     
             // 3) Multimode filter (separate L/R state)
             let lf = self.filter_l.process(l, dt);

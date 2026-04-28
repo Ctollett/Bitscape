@@ -1,5 +1,6 @@
 import { usePatch } from './patch-context';
 import { useRef, useCallback, useEffect } from 'react';
+import { getLevels } from '../audio/engine';
 
 import {
   NODE_RADIUS,
@@ -9,30 +10,56 @@ import {
   CANVAS_HEIGHT,
 } from './constants';
 
-import type { Point } from './types'
+import type { Point, FMCanvasPatch } from './types'
 
 
 const WAVE_W = 50;
 const WAVE_H = 30;
 
-function waveformPath(type: number): string {
-  const w = WAVE_W;
-  const h = WAVE_H;
-  const mid = h / 2;
+function evalWave(type: number, t: number): number {
+  const p = ((t % 1) + 1) % 1
   switch (type) {
-    case 0:
-      return `M0,${mid} C${w * 0.25},0 ${w * 0.25},0 ${w * 0.5},${mid} C${w * 0.75},${h} ${w * 0.75},${h} ${w},${mid}`;
-    case 1:
-      return `M0,${h} L0,0 L${w * 0.5},0 L${w * 0.5},${h} L${w},${h} L${w},0`;
-    case 2:
-      return `M0,${h} L${w * 0.5},0 L${w * 0.5},${h} L${w},0`;
-    case 3:
-      return `M0,${mid} L${w * 0.25},0 L${w * 0.75},${h} L${w},${mid}`;
-    case 4:
-      return `M0,${mid} L${w * 0.1},${h * 0.2} L${w * 0.2},${h * 0.7} L${w * 0.3},${h * 0.1} L${w * 0.4},${h * 0.8} L${w * 0.5},${h * 0.3} L${w * 0.6},${h * 0.9} L${w * 0.7},${h * 0.15} L${w * 0.8},${h * 0.6} L${w * 0.9},${h * 0.25} L${w},${mid}`;
-    default:
-      return `M0,${mid} L${w},${mid}`;
+    case 0: return Math.sin(p * Math.PI * 2)
+    case 1: return p < 0.5 ? 1 : -1
+    case 2: return 1 - 2 * p
+    case 3: return p < 0.5 ? 4 * p - 1 : 3 - 4 * p
+    case 4: {
+      const h = Math.sin(t * 127.1 + 311.7) * 43758.5453
+      return (h - Math.floor(h)) * 2 - 1
+    }
+    default: return Math.sin(p * Math.PI * 2)
   }
+}
+
+function computeFMWavePath(opIndex: number, patch: FMCanvasPatch, phase: number): string {
+  const N = 80
+  const periods = 2
+  const carrierRatio = patch.operators[opIndex].ratio
+  const carrierWave = patch.operatorWaveforms[opIndex]
+  const modulators = patch.connections.filter(c => c.dst === opIndex && c.src !== opIndex)
+
+  const mid = WAVE_H / 2
+  const amp = WAVE_H / 2 - 3
+
+  const parts: string[] = []
+  for (let i = 0; i <= N; i++) {
+    const t = (i / N) * periods
+    const x = (i / N) * WAVE_W
+
+    let modSig = 0
+    for (const conn of modulators) {
+      const modRatio = patch.operators[conn.src].ratio
+      const modWave = patch.operatorWaveforms[conn.src]
+      const depth = (patch.modDepthMatrix[conn.src * 4 + opIndex] ?? 0) / 127
+      const β = depth * depth * 7  // matches depth_to_index quadratic curve
+      modSig += β * evalWave(modWave, t * modRatio + phase * (modRatio / Math.max(0.001, carrierRatio)))
+    }
+
+    const sample = evalWave(carrierWave, t + phase + modSig)
+    const y = mid - amp * sample
+    parts.push(`${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`)
+  }
+  return parts.join(' ')
 }
 
 interface OperatorNodeProps {
@@ -90,6 +117,7 @@ export function OperatorNode({
   const pendingPos = useRef({x: 0, y: 0})
   const ringPathRef = useRef<SVGPathElement | null>(null)
   const ringCircleRef = useRef<SVGCircleElement | null>(null)
+  const wavePathRef = useRef<SVGPathElement | null>(null)
   const bumpAmountRef = useRef(0)
   const pullDirRef = useRef<{ x: number; y: number } | null>(null)
   const wasTensionRef = useRef(false)
@@ -99,11 +127,17 @@ export function OperatorNode({
   const getPullRef = useRef(getPullToward)
   const onPullStrengthRef = useRef(onPullStrength)
   const opPosRef = useRef(op.position)
+  const phaseRef = useRef(0)
+  const patchRef = useRef(patch)
   getPullRef.current = getPullToward
   onPullStrengthRef.current = onPullStrength
   opPosRef.current = op.position
+  patchRef.current = patch
 
+  // Ring deformation RAF — owns display and d attributes directly (React never sets them)
   useEffect(() => {
+    if (ringPathRef.current) ringPathRef.current.style.display = 'none'
+
     let raf: number
     const tick = () => {
       const target = getPullRef.current?.()
@@ -124,7 +158,6 @@ export function OperatorNode({
         circleEl.style.display = ''
       }
 
-      // --- Active tension: track bump toward pullStrength ---
       if (target) {
         const dx = target.x - cx
         const dy = target.y - cy
@@ -141,7 +174,6 @@ export function OperatorNode({
         }
       }
 
-      // --- Release: trigger ripple on first frame ---
       if (wasTensionRef.current) {
         wasTensionRef.current = false
         ripplingRef.current = true
@@ -150,7 +182,6 @@ export function OperatorNode({
         bumpAmountRef.current = 0
       }
 
-      // --- Ripple decay: sinusoidal oscillation along pull axis ---
       if (ripplingRef.current) {
         ripplePhaseRef.current += 0.55
         rippleAmplRef.current *= 0.78
@@ -180,6 +211,24 @@ export function OperatorNode({
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [])
+
+  // Waveform animation RAF — React never sets `d` on wavePathRef (no d prop in JSX)
+  useEffect(() => {
+    let waveRaf: number
+    const tick = () => {
+      const { l, r } = getLevels()
+      const isPlaying = l > 0.01 || r > 0.01
+      if (isPlaying) {
+        phaseRef.current += 0.008 * patchRef.current.operators[opIndex].ratio
+      }
+      if (wavePathRef.current) {
+        wavePathRef.current.setAttribute('d', computeFMWavePath(opIndex, patchRef.current, phaseRef.current))
+      }
+      waveRaf = requestAnimationFrame(tick)
+    }
+    waveRaf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(waveRaf)
+  }, [opIndex])
 
   const flushPosition = useCallback(() => {
     const { x, y } = pendingPos.current
@@ -244,17 +293,22 @@ export function OperatorNode({
               <path d={deformedRingPath(op.position.x, op.position.y, RING_RADIUS, activePull.x, activePull.y)} fill="none" stroke={ringColor} strokeWidth={2} strokeDasharray="6 4" />
             ) : (
               <>
-                <path ref={ringPathRef} style={{ display: 'none' }} fill="none" stroke={ringColor} strokeWidth={2} strokeDasharray="6 4" d="" />
+                {/* d and display are owned entirely by the RAF — no d prop here */}
+                <path ref={ringPathRef} fill="none" stroke={ringColor} strokeWidth={2} strokeDasharray="6 4" />
                 <circle ref={ringCircleRef} className={isTargetable ? 'ring-targetable' : ''} cx={op.position.x} cy={op.position.y} r={RING_RADIUS} fill="none" stroke={ringColor} strokeWidth={2} strokeDasharray="6 4" />
               </>
             )}
           </svg>
         ) : null
       })()}
-      <div ref={nodeRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} className='operator-node' style={{ cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: op.position.x - NODE_RADIUS, top: op.position.y - NODE_RADIUS, width: NODE_RADIUS * 2, height: NODE_RADIUS * 2, borderRadius: '50%', border: `1px solid ${OPERATOR_COLORS[opIndex]}` }}>
+      <div ref={nodeRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} className='operator-node' style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: op.position.x - NODE_RADIUS, top: op.position.y - NODE_RADIUS, width: NODE_RADIUS * 2, height: NODE_RADIUS * 2, borderRadius: '50%', border: `1px solid ${OPERATOR_COLORS[opIndex]}` }}>
         <svg width={WAVE_W} height={WAVE_H} viewBox={`0 0 ${WAVE_W} ${WAVE_H}`} style={{ pointerEvents: 'none' }}>
-          <path d={waveformPath(patch.operatorWaveforms[opIndex])} fill="none" stroke={OPERATOR_COLORS[opIndex]} strokeWidth={2} />
+          {/* d is owned entirely by the waveform RAF — no d prop here */}
+          <path ref={wavePathRef} fill="none" stroke={OPERATOR_COLORS[opIndex]} strokeWidth={2} />
         </svg>
+        <span style={{ fontFamily: 'monospace', fontSize: 9, color: OPERATOR_COLORS[opIndex], opacity: 0.7, pointerEvents: 'none', lineHeight: 1, marginTop: 2 }}>
+          {op.ratio % 1 === 0 ? op.ratio.toFixed(0) : op.ratio.toFixed(2)}×
+        </span>
       </div>
     </>
   );

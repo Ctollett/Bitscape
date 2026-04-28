@@ -25,22 +25,15 @@ export async function initAudio(): Promise<void> {
     processorOptions: { wasmModule, sampleRate: audioCtx.sampleRate },
   });
 
-  const splitter = audioCtx.createChannelSplitter(2);
-  const mergerL = audioCtx.createChannelMerger(1);
-  const mergerR = audioCtx.createChannelMerger(1);
-
   analyserL = audioCtx.createAnalyser();
-  analyserR = audioCtx.createAnalyser();
-  analyserL.fftSize = 256;
-  analyserR.fftSize = 256;
+  analyserL.fftSize = 2048;
+  analyserL.smoothingTimeConstant = 0.8;
+  analyserL.minDecibels = -120;
+  analyserL.maxDecibels = 0;
 
-  workletNode.connect(splitter);
-  splitter.connect(mergerL, 0, 0);
-  splitter.connect(mergerR, 1, 0);
-  mergerL.connect(analyserL);
-  mergerR.connect(analyserR);
-
-  workletNode.connect(audioCtx.destination);
+  // Tap the worklet output → analyser → destination (in-line, guaranteed to process)
+  workletNode.connect(analyserL);
+  analyserL.connect(audioCtx.destination);
 
   return new Promise<void>((resolve) => {
     workletNode!.port.onmessage = (e) => {
@@ -97,7 +90,7 @@ export function noteOff(noteId: number): void {
   workletNode.port.postMessage({ type: 'note_off', args: [noteId] });
 }
 
-export function setParam(fn: string, ...args: (number | boolean | Uint32Array)[]): void {
+export function setParam(fn: string, ...args: (number | boolean | Uint32Array | Float32Array)[]): void {
   if (!ready || !workletNode) return;
   workletNode.port.postMessage({ type: 'param', fn, args });
 }
@@ -106,21 +99,32 @@ export function isReady(): boolean {
   return ready;
 }
 
-/** Returns RMS levels for L and R channels, each in range [0, 1]. */
+/** Returns RMS level in range [0, 1] (mono mix). */
 export function getLevels(): { l: number; r: number } {
-  if (!analyserL || !analyserR) return { l: 0, r: 0 };
-
+  if (!analyserL) return { l: 0, r: 0 };
   const buf = new Float32Array(analyserL.fftSize);
-
   analyserL.getFloatTimeDomainData(buf);
-  let sumL = 0;
-  for (let i = 0; i < buf.length; i++) sumL += buf[i] * buf[i];
-  const l = Math.sqrt(sumL / buf.length);
+  let sum = 0;
+  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  const rms = Math.sqrt(sum / buf.length);
+  return { l: rms, r: rms };
+}
 
-  analyserR.getFloatTimeDomainData(buf);
-  let sumR = 0;
-  for (let i = 0; i < buf.length; i++) sumR += buf[i] * buf[i];
-  const r = Math.sqrt(sumR / buf.length);
+/** Returns time-domain samples for the oscilloscope. */
+export function getWaveform(): Float32Array {
+  if (!analyserL) return new Float32Array(0);
+  const buf = new Float32Array(analyserL.fftSize);
+  analyserL.getFloatTimeDomainData(buf);
+  return buf;
+}
 
-  return { l, r };
+/**
+ * Returns frequency-domain data as Uint8Array (0–255).
+ * Maps analyser.minDecibels–maxDecibels (−120–0 dBFS) to 0–255.
+ */
+export function getSpectrum(): { data: Uint8Array; binCount: number; nyquist: number } {
+  if (!analyserL || !audioCtx) return { data: new Uint8Array(0), binCount: 0, nyquist: 0 };
+  const data = new Uint8Array(analyserL.frequencyBinCount);
+  analyserL.getByteFrequencyData(data);
+  return { data, binCount: analyserL.frequencyBinCount, nyquist: audioCtx.sampleRate / 2 };
 }

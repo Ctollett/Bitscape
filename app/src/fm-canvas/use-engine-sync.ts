@@ -50,22 +50,19 @@ function scaledDepth(depth: number, destination: number): number {
  * Uses a ref to track the previously-synced patch for efficient diffing.
  */
 export function useEngineSync(patch: FMCanvasPatch): void {
-  const prevRef = useRef<FMCanvasPatch | null>(null);
+  const prevRef        = useRef<FMCanvasPatch | null>(null);
+  const carrierCountRef = useRef(4); // tracks live carrier count for carrier_mix normalization
 
   useEffect(() => {
     const current = patch;
     const prev = prevRef.current;
 
-    // Connections → custom routing
-    // Mod depths (distance-based) - MUST be set BEFORE routing
-    // so the engine has the correct depth values when applying routing
-    if (!prev || prev.modDepthA !== current.modDepthA) {
-      console.log(`[engine-sync] modDepthA: ${prev?.modDepthA ?? 'initial'} → ${current.modDepthA}`);
-      setParam('set_mod_depth_a', current.modDepthA);
-    }
-    if (!prev || prev.modDepthB !== current.modDepthB) {
-      console.log(`[engine-sync] modDepthB: ${prev?.modDepthB ?? 'initial'} → ${current.modDepthB}`);
-      setParam('set_mod_depth_b', current.modDepthB);
+    // Per-connection depth matrix — send whenever matrix changes
+    const matrixChanged = !prev
+      || !prev.modDepthMatrix
+      || prev.modDepthMatrix.some((v, i) => v !== current.modDepthMatrix[i]);
+    if (matrixChanged) {
+      setParam('set_mod_depth_matrix', new Float32Array(current.modDepthMatrix));
     }
 
     // Connections → custom routing (set AFTER depths)
@@ -87,7 +84,7 @@ export function useEngineSync(patch: FMCanvasPatch): void {
         if (current.operatorFeedback[opIndex] > 0) {
           // Only add self-loop if not already present
           if (!allConnections.some(c => c.src === opIndex && c.dst === opIndex)) {
-            allConnections.push({ src: opIndex, dst: opIndex });
+            allConnections.push({ src: opIndex, dst: opIndex, srcOffset: { x: 0, y: 0 }, dstOffset: { x: 0, y: 0 } });
           }
         }
       }
@@ -98,19 +95,22 @@ export function useEngineSync(patch: FMCanvasPatch): void {
         modFlat[i * 2 + 1] = allConnections[i].dst;
       }
 
-      const dstSet = new Set(current.connections.map(c => c.dst));
-      const srcSet = new Set(current.connections.map(c => c.src));
+      // A carrier is any operator that doesn't modulate anything else.
+      // If an op is a source it becomes a pure modulator, regardless of
+      // whether it is also being modulated (intermediate chain node).
+      const srcSet = new Set(current.connections.filter(c => c.src !== c.dst).map(c => c.src));
       const carriers: number[] = [];
       for (let i = 0; i < 4; i++) {
-        if (!srcSet.has(i) || dstSet.has(i)) {
-          carriers.push(i);
-        }
+        if (!srcSet.has(i)) carriers.push(i);
       }
       if (carriers.length === 0) carriers.push(0);
 
       const carrierFlat = new Uint32Array(carriers);
+      carrierCountRef.current = carriers.length;
       console.log('[engine-sync] routing:', current.connections.map(c => `${c.src}→${c.dst}`).join(', '), 'carriers:', carriers);
       setParam('set_custom_routing', modFlat, carrierFlat);
+      // Re-send carrier_mix normalized by new carrier count
+      setParam('set_carrier_mix', current.carrierMix / carriers.length);
 
     }
 
@@ -148,9 +148,9 @@ export function useEngineSync(patch: FMCanvasPatch): void {
       setParam('set_harm', current.harm);
     }
 
-    // Carrier mix
+    // Carrier mix — normalize by carrier count to prevent clipping when multiple carriers sum
     if (!prev || prev.carrierMix !== current.carrierMix) {
-      setParam('set_carrier_mix', current.carrierMix);
+      setParam('set_carrier_mix', current.carrierMix / Math.max(1, carrierCountRef.current));
     }
 
     // Detune
@@ -168,7 +168,9 @@ export function useEngineSync(patch: FMCanvasPatch): void {
     }
 
     if (!prev || prev.masterPan !== current.masterPan) {
-    setParam('set_pan', current.masterPan);
+      // Rust pan formula: pan_norm = pan / 63, where 0 = center, ±63 = hard L/R
+      // Patch stores 0–127 with 64 = center, so subtract 64 before sending
+      setParam('set_pan', current.masterPan - 64);
     }
 
     if (!prev || prev.portamentoTime !== current.portamentoTime) {
@@ -196,7 +198,7 @@ export function useEngineSync(patch: FMCanvasPatch): void {
     if (!prev || prev.filterType !== current.filterType) {
       setParam('set_filter_type', current.filterType);
       const rawCutoff = Math.min(127, current.filterCutoff);
-      setParam('set_filter_cutoff', 1 * Math.pow(20000, rawCutoff / 127));
+      setParam('set_filter_cutoff', 20 * Math.pow(1000, rawCutoff / 127));
       const rawRes = Math.min(127, current.filterResonance);
       setParam('set_filter_resonance', Math.max(0.5, 0.1 + (rawRes / 127) * 19.9));
     }
@@ -205,7 +207,7 @@ export function useEngineSync(patch: FMCanvasPatch): void {
     // Clamp to 127 max to guard against stale sessions that stored raw Hz
     if (!prev || prev.filterCutoff !== current.filterCutoff) {
       const rawCutoff = Math.min(127, current.filterCutoff);
-      const hz = 1 * Math.pow(20000, rawCutoff / 127);
+      const hz = 20 * Math.pow(1000, rawCutoff / 127);
       setParam('set_filter_cutoff', hz);
     }
 

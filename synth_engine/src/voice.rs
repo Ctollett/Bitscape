@@ -220,10 +220,9 @@ pub fn is_held(&self) -> bool {
 
     pub fn generate_sample(
         &mut self,
-        delta_time:  f32,
-        mod_depth_a: f32,
-        mod_depth_b: f32,
-        carrier_mix: f32,
+        delta_time:       f32,
+        mod_depth_matrix: &[f32; 16],
+        carrier_mix:      f32,
     ) -> (f32, f32) {
         // Skip processing entirely if voice is inactive
         if !self.active {
@@ -273,8 +272,6 @@ pub fn is_held(&self) -> bool {
         //   Each operator has its own mod envelope level
         //   Spatial depth (modDepthA/B) is multiplied by operator's envelope
         // The scaled modulator output is a phase offset in cycles (true PM).
-        let depth_a = mod_depth_a;
-        let depth_b = mod_depth_b;
 
         let mut outputs: [Option<f32>; 4] = [None; 4];
 
@@ -305,7 +302,8 @@ pub fn is_held(&self) -> bool {
                         let fb_contribution = self.operators[src].last_output * fb_beta;
                         pm_in += fb_contribution;
 
-                        // Debug logging - ALWAYS log first few times to verify code is hit
+                        // Debug logging (WASM only — web_sys unavailable in native tests)
+                        #[cfg(target_arch = "wasm32")]
                         if self.sample_counter < 10 || (fb_amount > 0.0 && (self.sample_counter % 4800 == 0)) {
                             web_sys::console::log_1(
                                 &format!("[RUST-FB] Op{} fb_amt={:.3} beta={:.3} last={:.3} contrib={:.3}",
@@ -313,13 +311,10 @@ pub fn is_held(&self) -> bool {
                             );
                         }
                     } else {
-                        // External modulator: scale by spatial depth and operator's envelope
+                        // External modulator: per-connection depth from spatial matrix
                         let raw = outputs[src].unwrap_or(0.0);
-                        let spatial_depth = match src {
-                            0 | 1 => depth_a,  // A-group spatial depth
-                            _     => depth_b,  // B-group spatial depth
-                        };
-                        let env_level = op_env_levels[src];  // Source operator's mod envelope
+                        let spatial_depth = mod_depth_matrix[src * 4 + dst];
+                        let env_level = op_env_levels[src];
                         let effective_depth = spatial_depth * env_level;
                         let beta = Self::depth_to_index(effective_depth);
                         pm_in += raw * beta;
@@ -509,20 +504,34 @@ mod tests {
         FMVoice::new(SAMPLE_RATE, algos[algo_idx].clone())
     }
 
+    /// Build a depth matrix from old-style (depth_a, depth_b) normalized 0–1 values.
+    /// Scales to 0–127 and assigns ops 0/1 → depth_a, ops 2/3 → depth_b.
+    fn matrix_ab(depth_a: f32, depth_b: f32) -> [f32; 16] {
+        let mut m = [0.0f32; 16];
+        for src in 0..4usize {
+            for dst in 0..4usize {
+                if src != dst {
+                    m[src * 4 + dst] = if src <= 1 { depth_a * 127.0 } else { depth_b * 127.0 };
+                }
+            }
+        }
+        m
+    }
+
     /// A pure carrier (no modulation) should produce a sine at the correct frequency.
     /// Verify by counting zero-crossings over 1 second.
     #[test]
     fn pure_sine_correct_frequency() {
         let mut voice = make_voice(0);
         let freq = 440.0;
-        voice.note_on(0, freq);
+        voice.note_on(0, freq, freq, false);
 
         let num_samples = SAMPLE_RATE as usize;
         let mut prev = 0.0f32;
         let mut zero_crossings = 0u32;
 
         for i in 0..num_samples {
-            let (l, _r) = voice.generate_sample(DT, 0.0, 0.0, 1.0);
+            let (l, _r) = voice.generate_sample(DT, &matrix_ab(0.0, 0.0), 1.0);
             if i > 0 && prev.signum() != l.signum() && l != 0.0 {
                 zero_crossings += 1;
             }
@@ -547,12 +556,12 @@ mod tests {
         // Before the fix, it would be processed 4 times → 4x pitch.
         let mut voice = make_voice(2); // algo index 2 = "Algo 3"
         let freq = 440.0;
-        voice.note_on(0, freq);
+        voice.note_on(0, freq, freq, false);
 
         let start_phase = voice.operators[1].osc.phase;
         let num_samples = 1000;
         for _ in 0..num_samples {
-            voice.generate_sample(DT, 0.0, 0.0, 1.0);
+            voice.generate_sample(DT, &matrix_ab(0.0, 0.0), 1.0);
         }
         let end_phase = voice.operators[1].osc.phase;
 
@@ -573,14 +582,14 @@ mod tests {
     #[test]
     fn zero_mod_depth_is_clean() {
         let mut voice = make_voice(0);
-        voice.note_on(0, 440.0);
+        voice.note_on(0, 440.0, 440.0, false);
 
         let mut max_sample = 0.0f32;
         let mut prev = 0.0f32;
         let mut max_diff = 0.0f32;
 
         for _ in 0..4410 {
-            let (l, _) = voice.generate_sample(DT, 0.0, 0.0, 1.0);
+            let (l, _) = voice.generate_sample(DT, &matrix_ab(0.0, 0.0), 1.0);
             max_sample = max_sample.max(l.abs());
             let diff = (l - prev).abs();
             max_diff = max_diff.max(diff);
@@ -601,10 +610,10 @@ mod tests {
     fn feedback_uses_previous_sample() {
         let mut voice = make_voice(0);
         voice.operators[1].feedback_amount = 64.0;
-        voice.note_on(0, 440.0);
+        voice.note_on(0, 440.0, 440.0, false);
 
         for _ in 0..1000 {
-            let (l, r) = voice.generate_sample(DT, 0.5, 0.0, 1.0);
+            let (l, r) = voice.generate_sample(DT, &matrix_ab(0.5, 0.0), 1.0);
             assert!(l.is_finite(), "Left sample is not finite: {}", l);
             assert!(r.is_finite(), "Right sample is not finite: {}", r);
         }
@@ -618,14 +627,14 @@ mod tests {
         let mut voice_mod = make_voice(3);
         let mut voice_dry = make_voice(3);
 
-        voice_mod.note_on(0, 440.0);
-        voice_dry.note_on(0, 440.0);
+        voice_mod.note_on(0, 440.0, 440.0, false);
+        voice_dry.note_on(0, 440.0, 440.0, false);
 
         // Run both: one with modulation, one without
         let mut sum_diff = 0.0f32;
         for _ in 0..4410 {
-            let (l_mod, _) = voice_mod.generate_sample(DT, 0.8, 0.8, 1.0);
-            let (l_dry, _) = voice_dry.generate_sample(DT, 0.0, 0.0, 1.0);
+            let (l_mod, _) = voice_mod.generate_sample(DT, &matrix_ab(0.8, 0.8), 1.0);
+            let (l_dry, _) = voice_dry.generate_sample(DT, &matrix_ab(0.0, 0.0), 1.0);
             sum_diff += (l_mod - l_dry).abs();
         }
 
@@ -645,8 +654,8 @@ mod tests {
         let mut voice_44 = FMVoice::new(44100.0, algos[0].clone());
         let mut voice_96 = FMVoice::new(96000.0, algos[0].clone());
 
-        voice_44.note_on(0, 440.0);
-        voice_96.note_on(0, 440.0);
+        voice_44.note_on(0, 440.0, 440.0, false);
+        voice_96.note_on(0, 440.0, 440.0, false);
 
         // Generate exactly 1 cycle (440Hz) at each rate
         let samples_44 = (44100.0 / 440.0) as usize; // ~100 samples
@@ -658,13 +667,13 @@ mod tests {
         // Collect peak values with modulation on
         let mut peak_44 = 0.0f32;
         for _ in 0..samples_44 {
-            let (l, _) = voice_44.generate_sample(dt_44, 0.5, 0.0, 1.0);
+            let (l, _) = voice_44.generate_sample(dt_44, &matrix_ab(0.5, 0.0), 1.0);
             peak_44 = peak_44.max(l.abs());
         }
 
         let mut peak_96 = 0.0f32;
         for _ in 0..samples_96 {
-            let (l, _) = voice_96.generate_sample(dt_96, 0.5, 0.0, 1.0);
+            let (l, _) = voice_96.generate_sample(dt_96, &matrix_ab(0.5, 0.0), 1.0);
             peak_96 = peak_96.max(l.abs());
         }
 
@@ -688,11 +697,11 @@ mod tests {
     #[test]
     fn custom_single_modulator_produces_sound() {
         let mut voice = make_custom_voice(vec![(1, 0)], vec![0]);
-        voice.note_on(0, 440.0);
+        voice.note_on(0, 440.0, 440.0, false);
 
         let mut has_signal = false;
         for _ in 0..4410 {
-            let (l, _) = voice.generate_sample(DT, 0.5, 0.0, 1.0);
+            let (l, _) = voice.generate_sample(DT, &matrix_ab(0.5, 0.0), 1.0);
             assert!(l.is_finite(), "Custom routing produced non-finite sample");
             if l.abs() > 0.01 { has_signal = true; }
         }
@@ -709,12 +718,12 @@ mod tests {
         // Instead, build a second custom voice with same topology for fair comparison
         let mut reference = make_custom_voice(vec![(1, 0)], vec![0]);
 
-        custom.note_on(0, 440.0);
-        reference.note_on(0, 440.0);
+        custom.note_on(0, 440.0, 440.0, false);
+        reference.note_on(0, 440.0, 440.0, false);
 
         for _ in 0..4410 {
-            let (cl, cr) = custom.generate_sample(DT, 0.5, 0.0, 1.0);
-            let (rl, rr) = reference.generate_sample(DT, 0.5, 0.0, 1.0);
+            let (cl, cr) = custom.generate_sample(DT, &matrix_ab(0.5, 0.0), 1.0);
+            let (rl, rr) = reference.generate_sample(DT, &matrix_ab(0.5, 0.0), 1.0);
             assert!((cl - rl).abs() < 1e-6, "Custom and reference diverged: {} vs {}", cl, rl);
             assert!((cr - rr).abs() < 1e-6, "Custom and reference diverged: {} vs {}", cr, rr);
         }
@@ -732,13 +741,13 @@ mod tests {
             vec![0],
         );
 
-        voice_mod.note_on(0, 440.0);
-        voice_dry.note_on(0, 440.0);
+        voice_mod.note_on(0, 440.0, 440.0, false);
+        voice_dry.note_on(0, 440.0, 440.0, false);
 
         let mut sum_diff = 0.0f32;
         for _ in 0..4410 {
-            let (l_mod, _) = voice_mod.generate_sample(DT, 0.8, 0.8, 1.0);
-            let (l_dry, _) = voice_dry.generate_sample(DT, 0.0, 0.0, 1.0);
+            let (l_mod, _) = voice_mod.generate_sample(DT, &matrix_ab(0.8, 0.8), 1.0);
+            let (l_dry, _) = voice_dry.generate_sample(DT, &matrix_ab(0.0, 0.0), 1.0);
             sum_diff += (l_mod - l_dry).abs();
         }
 
@@ -751,11 +760,11 @@ mod tests {
     #[test]
     fn custom_no_connections_all_carriers() {
         let mut voice = make_custom_voice(vec![], vec![0, 1, 2, 3]);
-        voice.note_on(0, 440.0);
+        voice.note_on(0, 440.0, 440.0, false);
 
         let mut max_sample = 0.0f32;
         for _ in 0..4410 {
-            let (l, r) = voice.generate_sample(DT, 0.0, 0.0, 1.0);
+            let (l, r) = voice.generate_sample(DT, &matrix_ab(0.0, 0.0), 1.0);
             assert!(l.is_finite() && r.is_finite());
             max_sample = max_sample.max(l.abs()).max(r.abs());
         }
@@ -769,11 +778,11 @@ mod tests {
     fn custom_hot_swap_algorithm() {
         let algos = get_algorithms();
         let mut voice = FMVoice::new(SAMPLE_RATE, algos[0].clone());
-        voice.note_on(0, 440.0);
+        voice.note_on(0, 440.0, 440.0, false);
 
         // Generate some samples with preset
         for _ in 0..100 {
-            voice.generate_sample(DT, 0.5, 0.0, 1.0);
+            voice.generate_sample(DT, &matrix_ab(0.5, 0.0), 1.0);
         }
 
         // Hot-swap to custom routing
@@ -782,7 +791,7 @@ mod tests {
 
         // Should still produce finite output after swap
         for _ in 0..4410 {
-            let (l, r) = voice.generate_sample(DT, 0.5, 0.5, 1.0);
+            let (l, r) = voice.generate_sample(DT, &matrix_ab(0.5, 0.5), 1.0);
             assert!(l.is_finite() && r.is_finite(),
                 "Non-finite output after hot-swap: ({}, {})", l, r);
         }

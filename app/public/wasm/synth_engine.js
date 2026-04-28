@@ -36,6 +36,22 @@ function passArray32ToWasm0(arg, malloc) {
     return ptr;
 }
 
+let cachedFloat32ArrayMemory0 = null;
+
+function getFloat32ArrayMemory0() {
+    if (cachedFloat32ArrayMemory0 === null || cachedFloat32ArrayMemory0.byteLength === 0) {
+        cachedFloat32ArrayMemory0 = new Float32Array(wasm.memory.buffer);
+    }
+    return cachedFloat32ArrayMemory0;
+}
+
+function passArrayF32ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 4, 4) >>> 0;
+    getFloat32ArrayMemory0().set(arg, ptr / 4);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+
 const SynthFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_synth_free(ptr >>> 0, 1));
@@ -429,6 +445,16 @@ export class Synth {
         wasm.synth_set_lfo2_start_phase(this.__wbg_ptr, p);
     }
     /**
+     * Set per-connection FM depth from a flat 16-element array (src*4+dst indexing).
+     * Each value is 0–127; unconnected pairs should be 0.
+     * @param {Float32Array} data
+     */
+    set_mod_depth_matrix(data) {
+        const ptr0 = passArrayF32ToWasm0(data, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.synth_set_mod_depth_matrix(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
      * Set mod envelope for a specific operator (0-3) across all voices.
      * @param {number} op_index
      * @param {number} attack
@@ -612,6 +638,7 @@ function __wbg_init_memory(imports, memory) {
 function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
+    cachedFloat32ArrayMemory0 = null;
     cachedUint32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
 

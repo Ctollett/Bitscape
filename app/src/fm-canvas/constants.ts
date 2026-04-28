@@ -41,7 +41,7 @@ export const SELF_LOOP_MAX_RADIUS = 80;
 export const SELF_LOOP_DEFAULT_RADIUS = 30;
 
 /** Exponential decay constant for distance → depth mapping (pixels) */
-export const DEPTH_DECAY_CONSTANT = 200;
+export const DEPTH_DECAY_CONSTANT = 350;
 
 /** Default ratios per operator: C=1.0, A=2.0, B1=3.0, B2=4.0 */
 const DEFAULT_RATIOS = [1.0, 2.0, 3.0, 4.0] as const;
@@ -65,6 +65,7 @@ export function createInitialPatch(): FMCanvasPatch {
     algorithmIndex: 0,
     modDepthA: 0,
     modDepthB: 0,
+    modDepthMatrix: new Array(16).fill(0),
     operatorFeedback: [0, 0, 0, 0],
     operatorDetune: [0, 0, 0, 0],
     operatorHarm: [0, 0, 0, 0],
@@ -75,15 +76,15 @@ export function createInitialPatch(): FMCanvasPatch {
     ampAttack: 30,
     ampDecay: 40,
     filterType: 0,             
-    filterCutoff: 64,      // slider 0-127, ~632 Hz (audible LP/HP starting point)
+    filterCutoff: 127,     // slider 0-127, fully open at init (20kHz)
     filterResonance: 4,    // slider 0-127, Q ≈ 0.73 (Butterworth)    
     filterEnvAttack: 0,       
     filterEnvDecay: 64,        
     filterEnvSustain: 100,    
     filterEnvRelease: 50,      
     filterEnvAmount: 0, 
-    ampSustain: 100,
-    ampRelease: 50,
+    ampSustain: 127,
+    ampRelease: 1,
     masterVolume: 100,
     masterPan: 64,
     masterOverdrive: 0,
@@ -111,7 +112,7 @@ export function createInitialPatch(): FMCanvasPatch {
     chorusReverbSend: 0,
 
     lfo1Speed: 2.0,
-    lfo1Depth: 0.3,
+    lfo1Depth: 0,
     lfo1Waveform: 1,
     lfo1Mode: 0,
     lfo1Destination: 0,
@@ -119,7 +120,7 @@ export function createInitialPatch(): FMCanvasPatch {
     lfo1Fade: 0,
 
     lfo2Speed: 0.5,
-    lfo2Depth: 0.2,
+    lfo2Depth: 0,
     lfo2Waveform: 0,
     lfo2Mode: 0,
     lfo2Destination: 19,

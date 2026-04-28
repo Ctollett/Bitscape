@@ -1,6 +1,6 @@
 import type { FMCanvasPatch } from './types';
 import type { PatchAction } from './patch-context';
-import { computeModDepths } from './depth-mapper';
+import { computeModDepths, computeModDepthMatrix } from './depth-mapper';
 import { RATIO_SNAPS, SELF_LOOP_MIN_RADIUS, SELF_LOOP_MAX_RADIUS } from './constants';
 
 /** Map self-loop radius (px) to feedback amount (0-127). */
@@ -49,7 +49,7 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
       const depths = computeModDepths(next);
       next.modDepthA = depths.modDepthA;
       next.modDepthB = depths.modDepthB;
-      console.log(`[patch-reducer] MOVE_OPERATOR ${action.opIndex}: modDepthA=${depths.modDepthA}, modDepthB=${depths.modDepthB}`);
+      next.modDepthMatrix = computeModDepthMatrix(next);
       return next;
     }
 
@@ -70,7 +70,7 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
       const depths = computeModDepths(next);
       next.modDepthA = depths.modDepthA;
       next.modDepthB = depths.modDepthB;
-      console.log(`[patch-reducer] ADD_CONNECTION ${action.src}→${action.dst}: modDepthA=${depths.modDepthA}, modDepthB=${depths.modDepthB}`);
+      next.modDepthMatrix = computeModDepthMatrix(next);
       return next;
     }
 
@@ -82,7 +82,7 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
       const depths = computeModDepths(next);
       next.modDepthA = depths.modDepthA;
       next.modDepthB = depths.modDepthB;
-      console.log(`[patch-reducer] REMOVE_CONNECTION ${action.src}→${action.dst}: modDepthA=${depths.modDepthA}, modDepthB=${depths.modDepthB}`);
+      next.modDepthMatrix = computeModDepthMatrix(next);
       return next;
     }
 
@@ -232,8 +232,15 @@ export function patchReducer(state: FMCanvasPatch, action: PatchAction): FMCanva
     case 'SET_LFO2':
       return { ...state, lfo2Speed: action.speed, lfo2Depth: action.depth, lfo2Waveform: action.waveform, lfo2Mode: action.mode, lfo2Destination: action.destination, lfo2Multiplier: action.multiplier, lfo2Fade: action.fade };
 
-    case 'LOAD_PATCH':
-      return action.patch;
+    case 'LOAD_PATCH': {
+      const loaded = action.patch;
+      if (!loaded.modDepthMatrix) {
+        const next = { ...loaded };
+        next.modDepthMatrix = computeModDepthMatrix(loaded);
+        return next;
+      }
+      return loaded;
+    }
 
     default:
       return state;
