@@ -1,3 +1,5 @@
+import { emitNoteOn, emitNoteOff } from './note-events';
+
 let audioCtx: AudioContext | null = null;
 let workletNode: AudioWorkletNode | null = null;
 let analyserL: AnalyserNode | null = null;
@@ -83,11 +85,13 @@ export async function initAudio(): Promise<void> {
 export function noteOn(noteId: number, freq: number): void {
   if (!ready || !workletNode) return;
   workletNode.port.postMessage({ type: 'note_on', args: [noteId, freq] });
+  emitNoteOn(noteId, freq);
 }
 
 export function noteOff(noteId: number): void {
   if (!ready || !workletNode) return;
   workletNode.port.postMessage({ type: 'note_off', args: [noteId] });
+  emitNoteOff(noteId);
 }
 
 export function setParam(fn: string, ...args: (number | boolean | Uint32Array | Float32Array)[]): void {

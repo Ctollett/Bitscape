@@ -14,6 +14,7 @@ interface ConnectionLineProps {
   color?: string;
   srcColor: string;
   dstColor: string;
+  lateralOffset?: number;
   onRemove: () => void;
   getSrcPullStrength?: () => number;
   getDstPullStrength?: () => number;
@@ -21,7 +22,7 @@ interface ConnectionLineProps {
 
 const NATURAL_LENGTH = 350
 
-function computePathData(src: Point, dst: Point, srcPull: number, dstPull: number, multiplier: number) {
+function computePathData(src: Point, dst: Point, srcPull: number, dstPull: number, multiplier: number, lateralOffset = 0) {
   const dx = dst.x - src.x
   const dy = dst.y - src.y
   const nodeDist = Math.sqrt(dx * dx + dy * dy)
@@ -29,12 +30,15 @@ function computePathData(src: Point, dst: Point, srcPull: number, dstPull: numbe
 
   const nx = dx / nodeDist
   const ny = dy / nodeDist
+  // Perpendicular direction (90° left of travel)
+  const px = -ny
+  const py = nx
 
   const srcEdge = edgePoint(src, dst)
   const dstEdge = edgePoint(dst, src)
 
-  const srcDot = { x: srcEdge.x + nx * (5 + srcPull), y: srcEdge.y + ny * (5 + srcPull) }
-  const dstDot = { x: dstEdge.x - nx * (5 + dstPull), y: dstEdge.y - ny * (5 + dstPull) }
+  const srcDot = { x: srcEdge.x + nx * (5 + srcPull) + px * lateralOffset, y: srcEdge.y + ny * (5 + srcPull) + py * lateralOffset }
+  const dstDot = { x: dstEdge.x - nx * (5 + dstPull) + px * lateralOffset, y: dstEdge.y - ny * (5 + dstPull) + py * lateralOffset }
 
   const ldx = dstDot.x - srcDot.x
   const ldy = dstDot.y - srcDot.y
@@ -57,7 +61,7 @@ function computePathData(src: Point, dst: Point, srcPull: number, dstPull: numbe
   return { pathD, srcDot, dstDot, glowWidth, glowOpacity }
 }
 
-export function ConnectionLine({ src, dst, color, srcColor, dstColor, onRemove, getSrcPullStrength, getDstPullStrength }: ConnectionLineProps) {
+export function ConnectionLine({ src, dst, color, srcColor, dstColor, lateralOffset = 0, onRemove, getSrcPullStrength, getDstPullStrength }: ConnectionLineProps) {
   const [multiplier, setMultiplier] = useState(0)
   const multiplierRef = useRef(0)
   const srcRef = useRef(src)
@@ -87,7 +91,7 @@ export function ConnectionLine({ src, dst, color, srcColor, dstColor, onRemove, 
       const dstPull = getDstPullStrength?.() ?? 0
       if (srcPull > 0 || dstPull > 0) {
         const { pathD, srcDot, dstDot, glowWidth, glowOpacity } = computePathData(
-          srcRef.current, dstRef.current, srcPull, dstPull, multiplierRef.current
+          srcRef.current, dstRef.current, srcPull, dstPull, multiplierRef.current, lateralOffset
         )
         glowPathRef.current?.setAttribute('d', pathD)
         glowPathRef.current?.setAttribute('stroke-width', String(glowWidth))
@@ -103,7 +107,7 @@ export function ConnectionLine({ src, dst, color, srcColor, dstColor, onRemove, 
     return () => cancelAnimationFrame(raf)
   }, [getSrcPullStrength, getDstPullStrength])
 
-  const { pathD, srcDot, dstDot, glowWidth, glowOpacity } = computePathData(src, dst, 0, 0, multiplier)
+  const { pathD, srcDot, dstDot, glowWidth, glowOpacity } = computePathData(src, dst, 0, 0, multiplier, lateralOffset)
 
   return (
     <g>

@@ -74,8 +74,6 @@ const runPhysics = () => {
 
     }
 
-    console.log("velocities",velocitiesRef.current)
-
     vel.x *= 0.88
     vel.y *= 0.88
     velocitiesRef.current[connectedOpIndex] = vel
@@ -210,15 +208,20 @@ void main() {
     />
     <svg style={{position: 'absolute', top: 0, left: 0, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, pointerEvents: 'none'}}>
 
-      {patch.connections.map((conn) => (
-        <ConnectionLine srcOffset={conn.srcOffset} dstOffset={conn.dstOffset} src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
-      dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst}
-      srcColor={OPERATOR_COLORS[conn.src]}
-      dstColor={OPERATOR_COLORS[conn.dst]}
-      getSrcPullStrength={() => pullStrengthsRef.current[conn.src] ?? 0}
-      getDstPullStrength={() => pullStrengthsRef.current[conn.dst] ?? 0}
-      onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
-      ))}
+      {patch.connections.map((conn) => {
+        const hasBidirectional = patch.connections.some(c => c.src === conn.dst && c.dst === conn.src)
+        const lateralOffset = hasBidirectional ? 10 : 0
+        return (
+          <ConnectionLine srcOffset={conn.srcOffset} dstOffset={conn.dstOffset} src={patch.operators[conn.src].position} key={`conn-${conn.src}-${conn.dst}`}
+          dst={patch.operators[conn.dst].position} srcOp={conn.src} dstOp={conn.dst}
+          srcColor={OPERATOR_COLORS[conn.src]}
+          dstColor={OPERATOR_COLORS[conn.dst]}
+          lateralOffset={lateralOffset}
+          getSrcPullStrength={() => pullStrengthsRef.current[conn.src] ?? 0}
+          getDstPullStrength={() => pullStrengthsRef.current[conn.dst] ?? 0}
+          onRemove={() => dispatch({ type: 'REMOVE_CONNECTION', src: conn.src, dst: conn.dst } )} />
+        )
+      })}
       {interaction.mode === 'drawing-connection' && interaction.fromOp !== null && interaction.mousePos && (() => {
         const opPos = patch.operators[interaction.fromOp].position
         const dx = interaction.mousePos.x - opPos.x

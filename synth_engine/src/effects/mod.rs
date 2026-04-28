@@ -24,11 +24,11 @@ impl Effects {
     }
 
     pub fn process(&mut self, l: f32, r: f32, dt: f32) -> (f32, f32) {
-        // 1. Delay first
+        // 1. Chorus first (time-modulation before time-based effects)
+        let (l, r) = self.chorus.process(l, r, dt);
+        // 2. Delay
         let (l, r) = self.delay.process(l, r, dt);
-        // 2. Then reverb
-        let (l, r) = self.reverb.process(l, r, dt);
-        // 3. Finally chorus
-        self.chorus.process(l, r, dt)
+        // 3. Reverb last (longest tail, should be at end of chain)
+        self.reverb.process(l, r, dt)
     }
 }
