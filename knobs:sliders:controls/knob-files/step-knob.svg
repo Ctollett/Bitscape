@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 300 300">
+  <!-- Generator: Adobe Illustrator 30.2.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 1)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #414042;
+      }
+
+      .st1 {
+        fill: #231f20;
+        stroke: #231f20;
+        stroke-miterlimit: 10;
+      }
+
+      .st2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <path class="st1" d="M167.2,114.5h0c3.4,2.9,7.5,4.8,11.8,5.7h0c12.7,2.6,21.8,14,21.5,27h0c0,4.4.9,8.9,2.9,12.8h0c5.9,11.6,2.7,25.7-7.7,33.6h0c-3.5,2.7-6.4,6.2-8.2,10.3h0c-5.4,11.8-18.5,18.1-31.1,15h0c-4.3-1.1-8.8-1.1-13.1,0h0c-12.6,3.2-25.7-3.1-31.1-15h0c-1.8-4.1-4.7-7.6-8.2-10.3h0c-10.3-7.9-13.6-22-7.7-33.6h0c2-4,3-8.4,2.9-12.8h0c-.3-13,8.8-24.3,21.5-27h0c4.4-.9,8.4-2.9,11.8-5.7h0c10-8.3,24.5-8.3,34.5,0Z"/>
+  <rect class="st2" x="137.4" y="115.9" width="25.2" height="5" rx="2.5" ry="2.5" transform="translate(31.6 268.4) rotate(-90)"/>
+  <rect class="st0" x="148.8" y="59" width="2.5" height="40" rx="1.2" ry="1.2"/>
+  <rect class="st0" x="209.9" y="206.5" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(520.6 237.4) rotate(135)"/>
+  <rect class="st0" x="233.5" y="162.3" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(459.3 -12.4) rotate(101.2)"/>
+  <rect class="st0" x="228.6" y="112.3" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(264.1 -130.7) rotate(67.5)"/>
+  <rect class="st0" x="196.8" y="73.5" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(85.3 -94.2) rotate(33.7)"/>
+  <rect class="st0" x="148.8" y="59" width="2.5" height="40" rx="1.2" ry="1.2"/>
+  <rect class="st0" x="100.7" y="73.5" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(-34.8 72.4) rotate(-33.7)"/>
+  <rect class="st0" x="68.9" y="112.3" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(-78.9 146.5) rotate(-67.5)"/>
+  <rect class="st0" x="64" y="162.3" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(-100.8 281.8) rotate(-101.2)"/>
+  <rect class="st0" x="87.6" y="206.5" width="2.5" height="40" rx="1.2" ry="1.2" transform="translate(-8.4 449.5) rotate(-135)"/>
+</svg>
