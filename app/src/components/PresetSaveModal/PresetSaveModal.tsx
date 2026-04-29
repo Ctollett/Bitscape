@@ -14,6 +14,42 @@ interface PopUpModalProps {
   onClose: () => void
 }
 
+interface RenameModalProps {
+  initialName: string
+  onClose: () => void
+  onRename: (name: string) => void
+}
+
+export function RenameModal({ initialName, onClose, onRename }: RenameModalProps) {
+  const [name, setName] = useState(initialName)
+  const [error, setError] = useState(false)
+
+  const handleSave = () => {
+    if (!name.trim()) { setError(true); return }
+    onRename(name.trim())
+  }
+
+  return createPortal(
+    <div className="modal">
+      <div className="modal-content">
+        <div className='modal-dots-top'><span><ModalDot /></span><span><ModalDot /></span></div>
+        <div className='modal-form-section'>
+          <div className='modal-title'><span>RENAME PRESET</span></div>
+          <div className='modal-input'>
+            <input autoFocus placeholder="Enter Preset Name" type='text' value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSave()} />
+            {error && <p>Please enter a preset name</p>}
+          </div>
+          <div className='modal-button-section'>
+            <button onClick={onClose} style={{ color: colors.text.secondary, cursor: 'pointer' }}>CANCEL</button>
+            <button onClick={handleSave} style={{ color: colors.text.secondary, cursor: 'pointer' }}>RENAME</button>
+          </div>
+        </div>
+        <div className='modal-dots-bottom'><span><ModalDot /></span><span><ModalDot /></span></div>
+      </div>
+    </div>
+  , document.body)
+}
+
 
 export function PopUpModal({ onClose } : PopUpModalProps) {
 

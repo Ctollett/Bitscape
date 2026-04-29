@@ -39,10 +39,10 @@ const RIGHT = `
 
 interface SaveButtonProps {
   onOpen: () => void
-  
+  onMenuSelect: (value: string) => void
 }
 
-export function SaveButton({ onOpen }: SaveButtonProps) {
+export function SaveButton({ onOpen, onMenuSelect }: SaveButtonProps) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<Option | null>(null)
@@ -69,6 +69,7 @@ export function SaveButton({ onOpen }: SaveButtonProps) {
   const handleSelect = (option: Option) => {
     setSelectedItem(option)
     setIsMenuOpen(false)
+    onMenuSelect(option.value)
   }
 
   return (
